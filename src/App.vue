@@ -21,7 +21,6 @@
         <div class="flex items-center space-x-4">
           <div class="hidden sm:flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-300">Stateless DMN & Universal BPMN Engine Ready</span>
             <span class="text-slate-300">Stateless DMN & Flowable BPMN Engine Active</span>
           </div>
 
@@ -53,8 +52,6 @@
     <CompanySwitcher />
 
     <!-- Main Navigation Bar -->
-    <div class="bg-white border-b border-gray-200 shadow-xs">
-      <div class="max-w-7xl mx-auto px-4">
     <div class="bg-white border-b border-gray-200 shadow-xs sticky top-[57px] z-30">
       <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
         <nav class="flex space-x-6 overflow-x-auto scrollbar-none">
@@ -63,7 +60,6 @@
             :key="tab.id"
             @click="activeTab = tab.id"
             :class="[
-              'py-4 px-1 text-xs md:text-sm font-bold border-b-2 transition flex items-center space-x-2 whitespace-nowrap',
               'py-3.5 px-1 text-xs md:text-sm font-bold border-b-2 transition flex items-center space-x-2 whitespace-nowrap',
               activeTab === tab.id
                 ? 'border-blue-600 text-blue-600'
@@ -80,28 +76,9 @@
             </span>
           </button>
         </nav>
-
-        <div class="hidden lg:flex items-center space-x-2 text-xs text-gray-500 font-medium">
-          <span class="inline-block w-2 h-2 rounded-full bg-blue-600"></span>
-          <span>Filing Cabinet Island Attached on Right</span>
-        </div>
       </div>
     </div>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-6 space-y-6">
-      <!-- TAB 1: DASHBOARD & ACTIVE PERMITS -->
-      <div v-if="activeTab === 'dashboard'" class="space-y-6">
-        <!-- Hero Overview Card -->
-        <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 shadow-xl relative overflow-hidden">
-          <div class="relative z-10 max-w-3xl">
-            <span class="bg-blue-500/20 text-blue-300 text-xs font-mono font-bold px-3 py-1 rounded-full border border-blue-400/30">
-              Virtual Filing Cabinet (VFC) Architecture
-            </span>
-            <h2 class="text-2xl font-bold mt-3">Portal Layanan Mandiri Pelaku Usaha</h2>
-            <p class="text-slate-300 text-sm mt-2 leading-relaxed">
-              Model <strong>Prepare → Submit → Review → Respond</strong>. Seluruh data profil dan dokumen Anda tersimpan aman pada Virtual Filing Cabinet (VFC Zone 1). Anda dapat meninjau seluruh prasyarat dan SLA secara transparan sebelum mengirim permohonan.
-            </p>
     <!-- Main Content Area: Split 2-Column Island Layout -->
     <main class="flex-1 max-w-7xl mx-auto w-full px-4 py-6">
       <div class="grid grid-cols-12 gap-6 items-start">
@@ -120,19 +97,6 @@
                   Model <strong>Prepare → Submit → Review → Respond</strong>. Seluruh data profil dan dokumen Anda tersimpan aman pada Virtual Filing Cabinet di sebelah kanan. Anda dapat meninjau seluruh prasyarat dan SLA secara transparan sebelum mengirim permohonan.
                 </p>
 
-            <div class="mt-6 flex flex-wrap items-center gap-3">
-              <button
-                @click="activeTab = 'kbli'"
-                class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-2"
-              >
-                <span>🔍 Cari Kode KBLI & Preview Aturan</span>
-              </button>
-              <button
-                @click="activeTab = 'vfc'"
-                class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl border border-slate-700 transition flex items-center space-x-2"
-              >
-                <span>📁 Buka Virtual Filing Cabinet (VFC)</span>
-              </button>
                 <div class="mt-5 flex flex-wrap items-center gap-3">
                   <button
                     @click="activeTab = 'kbli'"
@@ -149,18 +113,7 @@
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Active Permits SLA Tracker List -->
-        <div>
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-base font-bold text-gray-900 flex items-center space-x-2">
-              <span>📊 Progress Permohonan Izin & SLA Real-Time</span>
-              <span class="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full font-mono">
-                {{ activeApplications.length }} Permohonan
-              </span>
-            </h3>
             <!-- Active Permits SLA Tracker List -->
             <div>
               <div class="flex items-center justify-between mb-4">
@@ -187,30 +140,17 @@
             </div>
           </div>
 
-          <div v-if="activeApplications.length === 0" class="bg-white rounded-xl p-12 text-center border text-gray-500">
-            <p class="font-semibold text-gray-700">Belum ada permohonan izin aktif untuk entitas ini.</p>
-            <p class="text-xs text-gray-400 mt-1">Pilih menu "Pencarian KBLI" untuk memulai pengajuan permohonan baru.</p>
           <!-- WORKSPACE VIEW 2: KBLI SEARCH & DMN PREVIEW -->
           <div v-else-if="activeTab === 'kbli'">
             <KbliSearch @select-kbli="onSelectKbliForWizard" />
           </div>
 
-          <div v-else class="space-y-4">
-            <SlaTracker
-              v-for="app in activeApplications"
-              :key="app.id"
-              :application="app"
-            />
           <!-- WORKSPACE VIEW 3: PERMIT FILING WIZARD -->
           <div v-else-if="activeTab === 'wizard'">
             <PermitWizard @switch-tab="activeTab = $event" />
           </div>
         </div>
-      </div>
 
-      <!-- TAB 2: VIRTUAL FILING CABINET (VFC) -->
-      <div v-else-if="activeTab === 'vfc'">
-        <VirtualFilingCabinet />
         <!-- RIGHT COLUMN: Virtual Filing Cabinet Island (Desktop) -->
         <div class="hidden lg:block lg:col-span-5 xl:col-span-4 sticky top-[130px]">
           <VirtualFilingCabinet />
@@ -218,9 +158,6 @@
       </div>
     </main>
 
-      <!-- TAB 3: KBLI SEARCH & DMN PREVIEW -->
-      <div v-else-if="activeTab === 'kbli'">
-        <KbliSearch @select-kbli="onSelectKbliForWizard" />
     <!-- Mobile Drawer for Virtual Filing Cabinet Island -->
     <div
       v-if="showMobileVfc"
@@ -238,17 +175,6 @@
           <VirtualFilingCabinet />
         </div>
       </div>
-
-      <!-- TAB 4: PERMIT FILING WIZARD -->
-      <div v-else-if="activeTab === 'wizard'">
-        <PermitWizard @switch-tab="activeTab = $event" />
-      </div>
-
-      <!-- TAB 5: VERIFIABLE CREDENTIALS PORTFOLIO -->
-      <div v-else-if="activeTab === 'credentials'">
-        <VerifiableCredentials />
-      </div>
-    </main>
     </div>
   </div>
 </template>
@@ -264,22 +190,20 @@ import VirtualFilingCabinet from './components/VirtualFilingCabinet.vue';
 import KbliSearch from './components/KbliSearch.vue';
 import PermitWizard from './components/PermitWizard.vue';
 import SlaTracker from './components/SlaTracker.vue';
-import VerifiableCredentials from './components/VerifiableCredentials.vue';
 
 const companyStore = useCompanyStore();
 const vfcStore = useVfcStore();
 const permitStore = usePermitStore();
 
-const activeTab = ref('dashboard');
+const activeTab = ref<'dashboard' | 'kbli' | 'wizard'>('dashboard');
+const activeTab = ref<'kbli' | 'dashboard' | 'wizard'>('kbli');
 const showMobileVfc = ref(false);
 
 const tabs = computed(() => [
-  { id: 'dashboard', label: 'Dashboard & Tracker SLA', icon: '📊', badge: activeApplications.value.length },
-  { id: 'vfc', label: 'Virtual Filing Cabinet', icon: '📁', badge: currentCompanyDocs.value.length },
-  { id: 'kbli', label: 'Pencarian KBLI 2020', icon: '🔍' },
-  { id: 'wizard', label: 'Wizard Pengajuan Izin', icon: '📝' },
-  { id: 'credentials', label: 'Verifiable Credentials', icon: '📜', badge: approvedCredentials.value.length }
-  { id: 'wizard', label: 'Wizard Pengajuan Izin', icon: '📝' }
+  { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
+  { id: 'dashboard' as const, label: 'Dashboard & Tracker SLA', icon: '📊', badge: activeApplications.value.length },
+  { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
+  { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' }
 ]);
 
 const activeApplications = computed(() => permitStore.activeApplications);
@@ -299,4 +223,3 @@ function onSelectKbliForWizard(kbli: KbliItem) {
   activeTab.value = 'wizard';
 }
 </script>
-

@@ -1,23 +1,14 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-    <!-- Header -->
-    <div class="bg-slate-900 text-white p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-      <div>
   <div class="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
     <!-- Island Header -->
     <div class="bg-slate-900 text-white p-4 shrink-0">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
-          <span class="bg-blue-600 text-white text-xs font-bold px-2.5 py-0.5 rounded">VFC Zone 1 Vault</span>
-          <h2 class="text-xl font-bold">Virtual Filing Cabinet (VFC)</h2>
           <span class="bg-blue-600 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
             VFC Zone 1
           </span>
           <h2 class="text-sm font-bold tracking-tight">Virtual Filing Cabinet</h2>
         </div>
-        <p class="text-slate-300 text-sm mt-1">
-          Vault dokumen digital pribadi investor. Dokumen disimpan terisolasi dan dapat digunakan kembali (reuse) pada setiap permohonan izin tanpa perlu upload ulang.
-        </p>
 
         <button
           @click="showUploadModal = true"
@@ -30,23 +21,10 @@
         </button>
       </div>
 
-      <button
-        @click="showUploadModal = true"
-        class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow flex items-center space-x-2 transition"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-        </svg>
-        <span>Upload Dokumen ke VFC</span>
-      </button>
-    </div>
       <p class="text-[11px] text-slate-300 mt-1">
-        Vault pribadi investor terisolasi. Dokumen dapat digunakan kembali (reuse) pada pengajuan izin.
+        Vault dokumen pribadi investor. Dokumen dapat digunakan kembali (reuse) pada pengajuan izin.
       </p>
 
-    <!-- Category Tabs -->
-    <div class="border-b border-gray-200 bg-slate-50 px-6 pt-4">
-      <div class="flex space-x-4 overflow-x-auto pb-2 scrollbar-none">
       <!-- Category Filter Pills -->
       <div class="flex space-x-1.5 overflow-x-auto mt-3 pb-1 scrollbar-none">
         <button
@@ -54,21 +32,17 @@
           :key="cat.key"
           @click="activeCategory = cat.key"
           :class="[
-            'px-4 py-2 text-xs font-bold rounded-t-lg transition flex items-center space-x-2 whitespace-nowrap',
             'px-2.5 py-1 text-[11px] font-bold rounded-lg transition flex items-center space-x-1 whitespace-nowrap',
             activeCategory === cat.key
-              ? 'bg-white text-blue-600 border-t-2 border-blue-600 shadow-sm'
-              : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
               ? 'bg-blue-600 text-white shadow-xs'
               : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
           ]"
         >
           <span>{{ cat.icon }}</span>
           <span>{{ cat.label }}</span>
-          <span class="bg-gray-200 text-gray-700 text-[10px] px-2 py-0.5 rounded-full font-mono">
           <span
             :class="[
-              'text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold',
+              'text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold',
               activeCategory === cat.key ? 'bg-white text-blue-900' : 'bg-slate-700 text-slate-200'
             ]"
           >
@@ -78,17 +52,8 @@
       </div>
     </div>
 
-    <!-- Document List Grid -->
-    <div class="p-6">
-      <div v-if="filteredDocs.length === 0" class="text-center py-12 border-2 border-dashed border-gray-200 rounded-xl">
-        <svg class="w-12 h-12 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        <p class="mt-2 text-sm font-semibold text-gray-700">Belum ada dokumen dalam folder ini.</p>
-        <p class="text-xs text-gray-400">Klik tombol "Upload Dokumen ke VFC" untuk menyimpan dokumen legalitas Anda.</p>
-      </div>
     <!-- Island Body -->
-    <div class="p-4 overflow-y-auto flex-1 max-h-[calc(100vh-220px)] space-y-3 bg-slate-50/50">
+    <div class="p-4 overflow-y-auto flex-1 max-h-[calc(100vh-230px)] space-y-3 bg-slate-50/50">
       <!-- FOLDER 1-4: Standard Document Categories -->
       <div v-if="activeCategory !== 'CREDENTIALS'">
         <div v-if="filteredDocs.length === 0" class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-white p-4">
@@ -104,13 +69,6 @@
           </button>
         </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div
-          v-for="doc in filteredDocs"
-          :key="doc.id"
-          class="border border-gray-200 rounded-xl p-4 bg-white hover:border-blue-300 hover:shadow-md transition flex flex-col justify-between"
-        >
-          <div>
         <div v-else class="space-y-2.5">
           <div
             v-for="doc in filteredDocs"
@@ -118,10 +76,6 @@
             class="border border-gray-200 rounded-xl p-3 bg-white hover:border-blue-300 hover:shadow-xs transition"
           >
             <div class="flex items-start justify-between">
-              <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                </svg>
               <div class="flex items-start space-x-2.5">
                 <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,16 +88,12 @@
                   <p class="text-[10px] text-gray-400 mt-0.5">{{ doc.fileSize }} • {{ doc.uploadedAt }}</p>
                 </div>
               </div>
-              <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-                SHA-256 Validated
 
               <span class="text-[9px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
                 SHA-256
               </span>
             </div>
 
-            <h3 class="font-bold text-gray-900 text-sm mt-3 line-clamp-2">{{ doc.title }}</h3>
-            <p class="text-xs font-mono text-gray-500 mt-1 truncate">{{ doc.fileName }}</p>
             <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px]">
               <span class="text-gray-400 text-[10px] font-mono truncate max-w-[150px]">{{ doc.sha256.slice(0, 16) }}...</span>
               <button
@@ -157,9 +107,6 @@
         </div>
       </div>
 
-          <div class="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-            <span>{{ doc.fileSize }} • {{ doc.uploadedAt }}</span>
-            <span class="font-semibold text-blue-600 hover:underline cursor-pointer" @click="previewDoc(doc)">Lihat Preview</span>
       <!-- FOLDER 5: Verifiable Credentials (VC) Portfolio -->
       <div v-else>
         <div v-if="approvedCredentials.length === 0" class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-white p-4">
@@ -350,11 +297,6 @@ const showUploadModal = ref(false);
 const activeQrVc = ref<any>(null);
 
 const categories = [
-  { key: 'PERUSAHAAN', label: 'Profil Perusahaan', icon: '🏢' },
-  { key: 'LOKASI', label: 'Lokasi & Tata Ruang', icon: '🗺️' },
-  { key: 'LINGKUNGAN', label: 'Izin Lingkungan', icon: '🌱' },
-  { key: 'PERMOHONAN', label: 'Syarat Permohonan', icon: '📄' },
-  { key: 'CREDENTIALS', label: 'Credentials & VC', icon: '📜' }
   { key: 'PERUSAHAAN', label: 'Perusahaan', icon: '🏢' },
   { key: 'LOKASI', label: 'Lokasi & GIS', icon: '🗺️' },
   { key: 'LINGKUNGAN', label: 'Lingkungan', icon: '🌱' },
@@ -430,4 +372,3 @@ function downloadPdf(app: any) {
   alert(`Mengunduh dokumen PDF resmi Verifiable Credential:\nID: ${app.verifiableCredential?.vcId}\nKBLI: ${app.kbliCode} - ${app.kbliTitle}\n\nDokumen resmi ditandatangani secara elektronik (BSrE) oleh ${app.authority}.`);
 }
 </script>
-
