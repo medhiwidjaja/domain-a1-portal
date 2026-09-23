@@ -56,7 +56,6 @@
             </div>
             <div class="text-right">
               <span class="text-[10px] text-gray-500 block">Kewenangan Regulator</span>
-              <span class="text-xs font-bold text-blue-800">{{ permitStore.activeWizard.kbli.authority }}</span>
               <span class="text-xs font-bold text-blue-800">{{ activeScope?.licensing_requirements?.[0]?.authority || permitStore.activeWizard.kbli.authority }}</span>
             </div>
           </div>
@@ -376,13 +375,10 @@ const activeScope = computed(() => {
 });
 
 const reqList = computed(() => {
-  const kbli = permitStore.activeWizard.kbli;
-  if (!kbli || !kbli.scopes[0] || !kbli.scopes[0].licensing_requirements[0]) {
   const scope = activeScope.value;
   if (!scope || !scope.licensing_requirements || !scope.licensing_requirements[0]) {
     return [];
   }
-  return kbli.scopes[0].licensing_requirements[0].requirements;
   return scope.licensing_requirements[0].requirements || [];
 });
 

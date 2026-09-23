@@ -216,8 +216,6 @@ const totalVfcItems = computed(() => {
   return currentCompanyDocs.value.length + approvedCredentials.value.length;
 });
 
-function onSelectKbliForWizard(kbli: KbliItem) {
-  permitStore.startWizardForKbli(kbli);
 function onSelectKbliForWizard(payload: { kbli: KbliItem; scope?: any } | KbliItem, maybeScope?: any) {
   let kbli: KbliItem;
   let scope: any;
