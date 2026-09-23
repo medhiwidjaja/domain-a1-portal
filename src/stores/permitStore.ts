@@ -132,6 +132,7 @@ export const usePermitStore = defineStore('permitStore', {
       selectedScope: null as any | null,
       step: 1,
       formData: {
+        // Profil & Smart Engine
         projectName: '',
         investmentAmount: 1500000000,
         locationAddress: '',
@@ -141,6 +142,66 @@ export const usePermitStore = defineStore('permitStore', {
         laborCount: 20,
         machineryDetails: '',
         notes: ''
+        status_penanaman_modal: '02' as '01' | '02',
+        flag_umkm: 'Y' as 'Y' | 'N',
+        laborCount: 25,
+        machineryDetails: 'Perangkat & Mesin Produksi Sesuai Standar KBLI',
+        notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1',
+
+        // Persyaratan Dasar 1: KKPR
+        posisi_lokasi: '01' as '01' | '02' | '03', // 01 Darat, 02 Hutan, 03 Laut
+        flag_kolektif: 'N' as 'Y' | 'N',
+        jenis_bangunan_kolektif: '01',
+        luas_lantai_kolektif: 120,
+        satuan_luas_lantai: '02',
+        latitude: -6.54125,
+        longitude: 106.86432,
+        luas_tanah: 1500,
+        satuan_luas_tanah: 'm2' as 'm2' | 'ha',
+        alamat_usaha: 'Kawasan Industri Sentul Kavling 12-14, Desa Sentul',
+        provinsi: '32', // Jawa Barat
+        kab_kota: '3201', // Kab Bogor
+        kecamatan: '320101', // Babakan Madang
+        kelurahan: '3201012001', // Sentul
+        kode_pos: '16810',
+        flag_kawasan: 'Y' as 'Y' | 'N',
+        tipe_kawasan: '01', // Kawasan Industri
+        nama_kawasan: 'Kawasan Industri Sentul Sentra',
+        flag_rdtr: 'Y' as 'Y' | 'N',
+
+        // PKKPR (Jika non-UMK luar kawasan)
+        nomor_pkkpr: '056000000002',
+        garis_sempadan_bangunan: 8,
+        koefisien_dasar_bangunan: 60,
+        koefisien_lantai_bangunan: 2.4,
+        koefisien_dasar_hijau: 20,
+        status_penguasaan_lahan: '02', // Milik Sendiri
+        jenis_dokumen_tanah: '02', // HGB
+        nomor_dokumen_tanah: 'HGB-3201-2024-00981',
+        nama_pemilik_lahan: 'PT Nusantara Pratama Enterprise',
+        nama_penerbit_dokumen_tanah: 'Kantor Pertanahan Kab. Bogor',
+        tgl_terbit_tanah: '2024-03-15',
+
+        // Persyaratan Dasar 2: Persetujuan Lingkungan
+        flag_has_dokumen_lingkungan: 'N' as 'Y' | 'N',
+        jenis_dokumen_lingkungan: 'sppl',
+        nomor_lingkungan: '',
+        tgl_terbit_lingkungan: '',
+        uraian_usaha_lingkungan: 'Kegiatan usaha ini berkomitmen menerapkan pengelolaan limbah dan pencegahan pencemaran lingkungan hidup sesuai baku mutu nasional.',
+        flag_pernyataan_sppl: true,
+
+        // Persyaratan Dasar 3: Bangunan Gedung (PBG & SLF)
+        memerlukan_bangunan: 'Y' as 'Y' | 'N',
+        jenisIzinBangunan: 'pbg' as 'pbg' | 'slf',
+        jenisPermohonanBangunan: '01',
+        subFungsiUntukBangunan: '03', // Perindustrian
+        namaBangunan: 'Gedung Sentra Operasional',
+        luasTotalBangunan: 1500,
+        tinggiBangunan: 10.5,
+        jumlahLantai: 2,
+        jumlahEstimasiPenghuni: 40,
+        nomorImbUntukSlfEksisting: '',
+        disclaimerSimbg: true
       },
       selectedVfcDocIds: [] as string[]
     }
@@ -186,10 +247,17 @@ export const usePermitStore = defineStore('permitStore', {
 
   actions: {
     startWizardForKbli(kbli: KbliItem, scope?: any) {
+      const companyStore = useCompanyStore();
       const chosenScope = scope || (kbli.scopes && kbli.scopes[0]) || null;
       this.activeWizard.kbli = kbli;
       this.activeWizard.selectedScope = chosenScope;
       this.activeWizard.step = 1;
+
+      const riskCode = chosenScope?.licensing_requirements?.[0]?.risk_code || kbli.risk_code;
+      const isLow = riskCode === 'R' || riskCode === 'RE' || riskCode === 'MR';
+      const isHigh = riskCode === 'T' || riskCode === 'TI';
+      const isMarine = kbli.kbli_code.startsWith('03');
+
       this.activeWizard.formData = {
         projectName: `Kegiatan Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
         investmentAmount: 1500000000,
@@ -200,8 +268,73 @@ export const usePermitStore = defineStore('permitStore', {
         laborCount: 25,
         machineryDetails: 'Perangkat & Mesin Produksi Sesuai Standar KBLI',
         notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1'
+        projectName: `Operasi Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
+        investmentAmount: isLow ? 3500000000 : isHigh ? 25000000000 : 12000000000,
+        status_penanaman_modal: '02',
+        flag_umkm: isLow ? 'Y' : 'N',
+        laborCount: isLow ? 15 : 45,
+        machineryDetails: 'Instalasi dan Perangkat Operasional Sesuai Standar Teknis KBLI',
+        notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1 (Persyaratan Dasar)',
+
+        // KKPR
+        posisi_lokasi: isMarine ? '03' : '01',
+        flag_kolektif: 'N',
+        jenis_bangunan_kolektif: '01',
+        luas_lantai_kolektif: 120,
+        satuan_luas_lantai: '02',
+        latitude: -6.54125,
+        longitude: 106.86432,
+        luas_tanah: isMarine ? 500 : 2500,
+        satuan_luas_tanah: 'm2',
+        alamat_usaha: 'Kawasan Industri Sentul Kavling 12-14, Desa Sentul',
+        provinsi: '32',
+        kab_kota: '3201',
+        kecamatan: '320101',
+        kelurahan: '3201012001',
+        kode_pos: '16810',
+        flag_kawasan: 'Y',
+        tipe_kawasan: '01',
+        nama_kawasan: 'Kawasan Industri Sentul Sentra',
+        flag_rdtr: 'Y',
+
+        // PKKPR
+        nomor_pkkpr: '056000000002',
+        garis_sempadan_bangunan: 8,
+        koefisien_dasar_bangunan: 60,
+        koefisien_lantai_bangunan: 2.4,
+        koefisien_dasar_hijau: 20,
+        status_penguasaan_lahan: '02',
+        jenis_dokumen_tanah: '02',
+        nomor_dokumen_tanah: 'HGB-3201-2024-00981',
+        nama_pemilik_lahan: companyStore.activeCompany.name,
+        nama_penerbit_dokumen_tanah: 'Kantor Pertanahan Kab. Bogor',
+        tgl_terbit_tanah: '2024-03-15',
+
+        // Lingkungan
+        flag_has_dokumen_lingkungan: 'N',
+        jenis_dokumen_lingkungan: isLow ? 'sppl' : isHigh ? 'amdal' : 'ukl/upl',
+        nomor_lingkungan: '',
+        tgl_terbit_lingkungan: '',
+        uraian_usaha_lingkungan: `Rencana kegiatan ${kbli.title} dengan mematuhi baku mutu lingkungan hidup dan pengelolaan limbah operasional sesuai regulasi pemerintah.`,
+        flag_pernyataan_sppl: true,
+
+        // PBG & SLF
+        memerlukan_bangunan: isMarine ? 'N' : 'Y',
+        jenisIzinBangunan: 'pbg',
+        jenisPermohonanBangunan: '01',
+        subFungsiUntukBangunan: '03',
+        namaBangunan: `Gedung Sentra Operasional ${kbli.title}`,
+        luasTotalBangunan: 1500,
+        tinggiBangunan: 9.5,
+        jumlahLantai: 2,
+        jumlahEstimasiPenghuni: 35,
+        nomorImbUntukSlfEksisting: '',
+        disclaimerSimbg: true
       };
       this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-002'];
+
+      // Pre-select appropriate documents from VFC if already stored
+      this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-003'];
     },
 
     setWizardStep(step: number) {
