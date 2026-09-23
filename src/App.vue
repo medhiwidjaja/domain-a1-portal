@@ -195,14 +195,12 @@ const companyStore = useCompanyStore();
 const vfcStore = useVfcStore();
 const permitStore = usePermitStore();
 
-const activeTab = ref<'dashboard' | 'kbli' | 'wizard'>('dashboard');
 const activeTab = ref<'kbli' | 'dashboard' | 'wizard'>('kbli');
 const showMobileVfc = ref(false);
 
 const tabs = computed(() => [
   { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
   { id: 'dashboard' as const, label: 'Dashboard & Tracker SLA', icon: '📊', badge: activeApplications.value.length },
-  { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
   { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' }
 ]);
 
