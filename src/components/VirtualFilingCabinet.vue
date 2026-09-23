@@ -1,7 +1,7 @@
 <template>
   <div class="bg-white border border-gray-200 rounded-2xl shadow-sm flex flex-col h-full overflow-hidden">
     <!-- Island Header -->
-    <div class="bg-slate-900 text-white p-4 shrink-0">
+    <div class="bg-slate-900 text-white p-4 shrink-0 border-b border-slate-800">
       <div class="flex items-center justify-between">
         <div class="flex items-center space-x-2">
           <span class="bg-blue-600 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
@@ -10,180 +10,267 @@
           <h2 class="text-sm font-bold tracking-tight">Virtual Filing Cabinet</h2>
         </div>
 
-        <button
-          @click="showUploadModal = true"
-          class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg shadow transition flex items-center space-x-1"
-        >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          <span>Upload File</span>
-        </button>
+        <div class="flex items-center space-x-1.5">
+          <button
+            @click="openAddCategoryModal"
+            title="Tambah Kategori / Folder Kustom"
+            class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-bold px-2 py-1 rounded-lg border border-slate-700 transition flex items-center space-x-1"
+          >
+            <span>📁+</span>
+            <span class="hidden sm:inline">Folder Baru</span>
+          </button>
+
+          <button
+            @click="openUploadModal()"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] px-2.5 py-1 rounded-lg shadow transition flex items-center space-x-1"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>Upload</span>
+          </button>
+        </div>
       </div>
 
-      <p class="text-[11px] text-slate-300 mt-1">
-        Vault dokumen pribadi investor. Dokumen dapat digunakan kembali (reuse) pada pengajuan izin.
-      </p>
+      <!-- Vault Path & Search Toolbar -->
+      <div class="mt-3 flex items-center justify-between text-[11px] text-slate-400">
+        <div class="flex items-center space-x-1 truncate max-w-[200px] font-mono text-[10px]">
+          <span class="text-slate-500">vault://</span>
+          <span class="text-blue-400 font-bold truncate">{{ companyStore.activeCompanyId }}</span>
+          <span class="text-slate-600">/</span>
+        </div>
 
-      <!-- Category Filter Pills -->
-      <div class="flex space-x-1.5 overflow-x-auto mt-3 pb-1 scrollbar-none">
-        <button
-          v-for="cat in categories"
-          :key="cat.key"
-          @click="activeCategory = cat.key"
-          :class="[
-            'px-2.5 py-1 text-[11px] font-bold rounded-lg transition flex items-center space-x-1 whitespace-nowrap',
-            activeCategory === cat.key
-              ? 'bg-blue-600 text-white shadow-xs'
-              : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-          ]"
-        >
-          <span>{{ cat.icon }}</span>
-          <span>{{ cat.label }}</span>
-          <span
-            :class="[
-              'text-[9px] px-1.5 py-0.5 rounded-full font-mono font-bold',
-              activeCategory === cat.key ? 'bg-white text-blue-900' : 'bg-slate-700 text-slate-200'
-            ]"
+        <div class="flex items-center space-x-2">
+          <button
+            @click="toggleAllFolders"
+            class="text-[10px] text-slate-400 hover:text-slate-200 transition underline underline-offset-2"
           >
-            {{ getCount(cat.key) }}
+            {{ allExpanded ? 'Tutup Semua' : 'Buka Semua' }}
+          </button>
+          <span class="text-slate-600">•</span>
+          <span class="text-[10px] font-mono text-slate-300">
+            {{ totalFilesCount }} item
           </span>
+        </div>
+      </div>
+
+      <!-- Quick Filter Search Input -->
+      <div class="mt-2.5 relative">
+        <input
+          v-model="searchQuery"
+          type="text"
+          placeholder="Cari file dalam tree direktori..."
+          class="w-full bg-slate-800/90 border border-slate-700 text-slate-200 placeholder-slate-500 text-xs rounded-lg pl-7 pr-3 py-1.5 focus:outline-hidden focus:ring-1 focus:ring-blue-500"
+        />
+        <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        <button
+          v-if="searchQuery"
+          @click="searchQuery = ''"
+          class="absolute right-2 top-2 text-slate-400 hover:text-white text-xs"
+        >
+          ✕
         </button>
       </div>
     </div>
 
-    <!-- Island Body -->
-    <div class="p-4 overflow-y-auto flex-1 max-h-[calc(100vh-230px)] space-y-3 bg-slate-50/50">
-      <!-- FOLDER 1-4: Standard Document Categories -->
-      <div v-if="activeCategory !== 'CREDENTIALS'">
-        <div v-if="filteredDocs.length === 0" class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-white p-4">
-          <svg class="w-10 h-10 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <p class="mt-2 text-xs font-semibold text-gray-700">Belum ada dokumen di folder ini.</p>
-          <button
-            @click="showUploadModal = true"
-            class="mt-2 text-[11px] font-bold text-blue-600 hover:underline"
-          >
-            + Upload Dokumen Baru
-          </button>
-        </div>
-
-        <div v-else class="space-y-2.5">
+    <!-- Island Body: Directory Tree Explorer -->
+    <div class="p-3 overflow-y-auto flex-1 max-h-[calc(100vh-250px)] space-y-2 bg-slate-50/70">
+      <!-- DIRECTORY TREE ROOT NODE -->
+      <div class="space-y-2">
+        <!-- FOLDERS LIST -->
+        <div
+          v-for="folder in allFolders"
+          :key="folder.key"
+          class="bg-white border border-gray-200/90 rounded-xl overflow-hidden shadow-2xs transition"
+        >
+          <!-- FOLDER HEADER ROW (Directory Tree Node) -->
           <div
-            v-for="doc in filteredDocs"
-            :key="doc.id"
-            class="border border-gray-200 rounded-xl p-3 bg-white hover:border-blue-300 hover:shadow-xs transition"
+            @click="toggleFolder(folder.key)"
+            :class="[
+              'w-full px-3 py-2.5 flex items-center justify-between cursor-pointer select-none text-left transition',
+              expandedFolders[folder.key]
+                ? 'bg-slate-100/80 border-b border-gray-100 font-semibold text-slate-900'
+                : 'hover:bg-gray-50 text-slate-700'
+            ]"
           >
-            <div class="flex items-start justify-between">
-              <div class="flex items-start space-x-2.5">
-                <div class="p-2 bg-blue-50 text-blue-600 rounded-lg shrink-0">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h4 class="font-bold text-gray-900 text-xs line-clamp-1">{{ doc.title }}</h4>
-                  <p class="text-[10px] font-mono text-gray-500 mt-0.5 truncate max-w-[190px]">{{ doc.fileName }}</p>
-                  <p class="text-[10px] text-gray-400 mt-0.5">{{ doc.fileSize }} • {{ doc.uploadedAt }}</p>
-                </div>
-              </div>
+            <div class="flex items-center space-x-2 truncate">
+              <!-- Tree Chevron Indicator -->
+              <span class="text-gray-400 text-[10px] w-3 flex justify-center transition-transform" :class="{ 'rotate-90': expandedFolders[folder.key] }">
+                ▶
+              </span>
 
-              <span class="text-[9px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
-                SHA-256
+              <!-- Folder Icon (Open vs Closed) -->
+              <span class="text-sm">
+                {{ expandedFolders[folder.key] ? '📂' : folder.icon }}
+              </span>
+
+              <!-- Folder Title -->
+              <span class="text-xs font-bold text-gray-800 truncate">
+                {{ folder.label }}
+              </span>
+
+              <!-- Custom Category Badge -->
+              <span
+                v-if="folder.isCustom"
+                class="text-[9px] bg-purple-100 text-purple-700 font-medium px-1.5 py-0.2 rounded"
+              >
+                Kustom
               </span>
             </div>
 
-            <div class="mt-2.5 pt-2 border-t border-gray-100 flex items-center justify-between text-[11px]">
-              <span class="text-gray-400 text-[10px] font-mono truncate max-w-[150px]">{{ doc.sha256.slice(0, 16) }}...</span>
-              <button
-                @click="previewDoc(doc)"
-                class="font-semibold text-blue-600 hover:underline"
+            <!-- Folder Right Metadata & Actions -->
+            <div class="flex items-center space-x-1.5 shrink-0" @click.stop>
+              <!-- Item Count Badge -->
+              <span
+                :class="[
+                  'text-[10px] font-mono px-2 py-0.5 rounded-full font-bold',
+                  getFolderCount(folder.key) > 0
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-gray-100 text-gray-500'
+                ]"
               >
-                Preview File
+                {{ getFolderCount(folder.key) }}
+              </span>
+
+              <!-- Quick Upload into this folder -->
+              <button
+                v-if="folder.key !== 'CREDENTIALS'"
+                @click="openUploadModal(folder.key)"
+                title="Upload file langsung ke folder ini"
+                class="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded transition"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+              </button>
+
+              <!-- Delete custom folder button -->
+              <button
+                v-if="folder.isCustom"
+                @click="deleteCustomFolder(folder.key, folder.label)"
+                title="Hapus folder kustom"
+                class="text-gray-400 hover:text-red-600 hover:bg-red-50 p-1 rounded transition text-xs"
+              >
+                ✕
               </button>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- FOLDER 5: Verifiable Credentials (VC) Portfolio -->
-      <div v-else>
-        <div v-if="approvedCredentials.length === 0" class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-white p-4">
-          <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-            </svg>
-          </div>
-          <p class="text-xs font-semibold text-gray-700">Belum ada Verifiable Credential resmi terbit.</p>
-          <p class="text-[10px] text-gray-400 mt-1">Ajukan permohonan KBLI untuk mendapatkan Sertifikat Standar / NIB resmi.</p>
-        </div>
+          <!-- FOLDER CONTENT: NESTED FILES IN DIRECTORY TREE -->
+          <div v-show="expandedFolders[folder.key]" class="p-2.5 bg-slate-50/40">
+            <!-- BRANCH 1: CREDENTIALS FOLDER -->
+            <div v-if="folder.key === 'CREDENTIALS'" class="space-y-2 border-l-2 border-emerald-300 ml-3 pl-3">
+              <div v-if="filteredCredentials.length === 0" class="py-4 px-2 text-center text-gray-400 text-xs italic">
+                Belum ada Verifiable Credential resmi terbit untuk entitas ini.
+              </div>
 
-        <div v-else class="space-y-3">
-          <div
-            v-for="app in approvedCredentials"
-            :key="app.id"
-            class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white rounded-xl p-4 shadow-md border border-slate-700 relative overflow-hidden"
-          >
-            <!-- Watermark -->
-            <div class="absolute right-0 bottom-0 opacity-10 pointer-events-none transform translate-x-4 translate-y-4">
-              <svg class="w-32 h-32 text-white" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-              </svg>
-            </div>
-
-            <!-- VC Header -->
-            <div class="flex items-center justify-between">
-              <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1">
-                <svg class="w-2.5 h-2.5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-                <span>W3C VC</span>
-              </span>
-
-              <span class="text-[9px] font-mono bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
-                {{ app.verifiableCredential?.credentialType }}
-              </span>
-            </div>
-
-            <div class="mt-2.5">
-              <h4 class="font-bold text-xs text-white line-clamp-1">{{ app.kbliTitle }}</h4>
-              <p class="text-[10px] text-slate-300">KBLI {{ app.kbliCode }} • {{ app.companyName }}</p>
-
-              <div class="mt-2 bg-slate-800/80 p-2.5 rounded-lg border border-slate-700/60 text-[10px] space-y-1 font-mono">
-                <div class="truncate text-emerald-300">
-                  <span class="text-slate-400 font-sans font-bold">VC ID:</span> {{ app.verifiableCredential?.vcId }}
+              <div
+                v-for="app in filteredCredentials"
+                :key="app.id"
+                class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white rounded-xl p-3 shadow-xs border border-slate-700 relative overflow-hidden"
+              >
+                <div class="flex items-center justify-between">
+                  <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>W3C VC</span>
+                  </span>
+                  <span class="text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
+                    {{ app.verifiableCredential?.credentialType }}
+                  </span>
                 </div>
-                <div class="text-slate-300">
-                  <span class="text-slate-400 font-sans font-bold">Terbit:</span> {{ formatDate(app.verifiableCredential?.issuedAt) }}
+
+                <div class="mt-2">
+                  <h4 class="font-bold text-xs text-white line-clamp-1">{{ app.kbliTitle }}</h4>
+                  <p class="text-[10px] text-slate-300">KBLI {{ app.kbliCode }}</p>
+
+                  <div class="mt-1.5 bg-slate-800/80 p-2 rounded-lg text-[9px] font-mono space-y-0.5 border border-slate-700">
+                    <div class="truncate text-emerald-300">ID: {{ app.verifiableCredential?.vcId }}</div>
+                    <div class="text-slate-300">Terbit: {{ formatDate(app.verifiableCredential?.issuedAt) }}</div>
+                    <div class="truncate text-blue-300">Hash: {{ app.verifiableCredential?.proofHash.slice(0, 16) }}...</div>
+                  </div>
                 </div>
-                <div class="truncate text-blue-300">
-                  <span class="text-slate-400 font-sans font-bold">Hash:</span> {{ app.verifiableCredential?.proofHash.slice(0, 20) }}...
+
+                <div class="mt-2.5 pt-2 border-t border-slate-700 flex items-center justify-between">
+                  <button
+                    @click="activeQrVc = app.verifiableCredential"
+                    class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-white rounded border border-slate-600 transition"
+                  >
+                    QR Check
+                  </button>
+                  <button
+                    @click="downloadPdf(app)"
+                    class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold text-white rounded shadow transition"
+                  >
+                    Unduh PDF
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- VC Actions -->
-            <div class="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between">
-              <button
-                @click="activeQrVc = app.verifiableCredential"
-                class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-white rounded border border-slate-600 transition flex items-center space-x-1"
+            <!-- BRANCH 2: REGULAR & CUSTOM CATEGORY DOCUMENT FOLDERS -->
+            <div v-else class="space-y-1.5 border-l-2 border-blue-200 ml-3 pl-3">
+              <div
+                v-if="getDocsInFolder(folder.key).length === 0"
+                class="py-3 px-2 text-center text-gray-400 text-xs italic"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
-                </svg>
-                <span>QR Check</span>
-              </button>
+                Folder kosong.
+                <button
+                  @click="openUploadModal(folder.key)"
+                  class="text-blue-600 font-semibold hover:underline block mx-auto mt-1"
+                >
+                  + Upload file ke folder ini
+                </button>
+              </div>
 
-              <button
-                @click="downloadPdf(app)"
-                class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold text-white rounded shadow transition flex items-center space-x-1"
+              <!-- FILE NODE IN TREE -->
+              <div
+                v-for="doc in getDocsInFolder(folder.key)"
+                :key="doc.id"
+                class="bg-white border border-gray-200 hover:border-blue-400 rounded-lg p-2.5 shadow-2xs hover:shadow-xs transition group"
               >
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <span>Unduh PDF</span>
-              </button>
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex items-start space-x-2 truncate">
+                    <!-- File Extension Icon -->
+                    <span class="text-base shrink-0 mt-0.5">
+                      {{ getFileIcon(doc.fileName) }}
+                    </span>
+
+                    <div class="truncate">
+                      <h4 class="font-bold text-gray-900 text-xs line-clamp-1">{{ doc.title }}</h4>
+                      <p class="text-[10px] font-mono text-gray-500 truncate max-w-[190px]">{{ doc.fileName }}</p>
+                      <p class="text-[9px] text-gray-400">{{ doc.fileSize }} • {{ doc.uploadedAt }}</p>
+                    </div>
+                  </div>
+
+                  <span class="text-[8px] font-mono bg-slate-100 text-slate-700 px-1 py-0.5 rounded shrink-0">
+                    SHA-256
+                  </span>
+                </div>
+
+                <div class="mt-2 pt-1.5 border-t border-gray-100 flex items-center justify-between text-[10px]">
+                  <span class="text-gray-400 font-mono truncate max-w-[130px]" :title="doc.sha256">
+                    {{ doc.sha256.slice(0, 12) }}...
+                  </span>
+
+                  <div class="flex items-center space-x-2">
+                    <button
+                      @click="previewDoc(doc)"
+                      class="font-semibold text-blue-600 hover:text-blue-800 hover:underline"
+                    >
+                      Preview
+                    </button>
+                    <button
+                      @click="copyHash(doc.sha256)"
+                      class="text-gray-400 hover:text-gray-700"
+                      title="Salin SHA-256 Digest"
+                    >
+                      Salin Hash
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -194,7 +281,10 @@
     <div v-if="showUploadModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
         <div class="flex justify-between items-center pb-4 border-b">
-          <h3 class="text-base font-bold text-gray-900">Upload Dokumen Baru ke VFC Vault</h3>
+          <div>
+            <h3 class="text-base font-bold text-gray-900">Upload Dokumen ke Folder VFC</h3>
+            <p class="text-xs text-gray-500">Dokumen akan dienkripsi dan dihitung hash SHA-256 secara otomatis.</p>
+          </div>
           <button @click="showUploadModal = false" class="text-gray-400 hover:text-gray-600">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -204,12 +294,26 @@
 
         <form @submit.prevent="handleUpload" class="mt-4 space-y-4">
           <div>
-            <label class="block text-xs font-bold text-gray-700 uppercase">Kategori Folder VFC</label>
-            <select v-model="newDoc.category" class="mt-1 block w-full p-2.5 border border-gray-300 rounded-lg text-xs bg-gray-50 font-semibold text-gray-800">
-              <option value="PERUSAHAAN">Profil Perusahaan (Akta, NPWP, NIK)</option>
-              <option value="LOKASI">Lokasi & Tata Ruang (Sertifikat HGB, GIS)</option>
-              <option value="LINGKUNGAN">Lingkungan (SPPL, UKL-UPL, AMDAL)</option>
-              <option value="PERMOHONAN">Permohonan (Pakta Integritas, Specimen)</option>
+            <label class="block text-xs font-bold text-gray-700 uppercase">Target Folder Direktori</label>
+            <select
+              v-model="newDoc.category"
+              class="mt-1 block w-full p-2.5 border border-gray-300 rounded-lg text-xs bg-gray-50 font-semibold text-gray-800"
+            >
+              <optgroup label="Folder Standar">
+                <option value="PERUSAHAAN">Perusahaan (Akta, NPWP, NIK)</option>
+                <option value="LOKASI">Lokasi (Sertifikat HGB, GIS, Tata Ruang)</option>
+                <option value="LINGKUNGAN">Lingkungan (SPPL, UKL-UPL, AMDAL)</option>
+                <option value="PENGAJUAN">Pengajuan (Pakta Integritas, Form Permohonan)</option>
+              </optgroup>
+              <optgroup v-if="vfcStore.customCategories.length > 0" label="Folder Kustom">
+                <option
+                  v-for="custom in vfcStore.customCategories"
+                  :key="custom.key"
+                  :value="custom.key"
+                >
+                  {{ custom.icon }} {{ custom.label }}
+                </option>
+              </optgroup>
             </select>
           </div>
 
@@ -219,7 +323,7 @@
               v-model="newDoc.title"
               type="text"
               required
-              placeholder="Contoh: Akta Perubahan Notaris 2026"
+              placeholder="Contoh: Neraca Keuangan Audit 2025"
               class="mt-1 block w-full p-2.5 border border-gray-300 rounded-lg text-xs"
             />
           </div>
@@ -234,8 +338,12 @@
             />
           </div>
 
-          <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800">
-            ℹ️ Dokumen akan otomatis dihitung hash SHA-256 dan disimpan pada MinIO S3 Virtual Filing Cabinet (VFC Zone 1) terisolasi.
+          <div class="p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-800 flex items-start space-x-2">
+            <span class="text-base">🔒</span>
+            <div>
+              <p class="font-bold">Keamanan Terisolasi VFC Zone 1</p>
+              <p class="text-[11px] mt-0.5">Dokumen disimpan pada object storage terisolasi dan dapat dilampirkan ulang tanpa upload berulang ke kementerian teknis.</p>
+            </div>
           </div>
 
           <div class="flex justify-end space-x-3 pt-2">
@@ -250,10 +358,126 @@
               type="submit"
               class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow"
             >
-              Upload ke Vault VFC
+              Simpan ke Folder
             </button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Add Custom Category Modal -->
+    <div v-if="showAddCategoryModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b">
+          <h3 class="text-base font-bold text-gray-900">Tambah Folder Kustom</h3>
+          <button @click="showAddCategoryModal = false" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <form @submit.prevent="handleCreateCategory" class="mt-4 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase">Nama Folder / Kategori</label>
+            <input
+              v-model="newCategoryName"
+              type="text"
+              required
+              placeholder="Contoh: Pajak & Bea Cukai"
+              class="mt-1 block w-full p-2.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 uppercase">Pilih Ikon Folder</label>
+            <div class="grid grid-cols-6 gap-2 mt-1.5">
+              <button
+                type="button"
+                v-for="icon in availableIcons"
+                :key="icon"
+                @click="selectedCategoryIcon = icon"
+                :class="[
+                  'p-2 text-base rounded-lg border text-center transition',
+                  selectedCategoryIcon === icon
+                    ? 'border-blue-600 bg-blue-50 shadow-xs'
+                    : 'border-gray-200 hover:bg-gray-50'
+                ]"
+              >
+                {{ icon }}
+              </button>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-2 pt-2">
+            <button
+              type="button"
+              @click="showAddCategoryModal = false"
+              class="px-3.5 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              class="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow"
+            >
+              Buat Folder
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Document Preview & Integrity Modal -->
+    <div v-if="previewingDoc" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+        <div class="flex justify-between items-center pb-3 border-b">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl">{{ getFileIcon(previewingDoc.fileName) }}</span>
+            <div>
+              <h3 class="text-sm font-bold text-gray-900">{{ previewingDoc.title }}</h3>
+              <p class="text-[10px] text-gray-500">{{ previewingDoc.fileName }}</p>
+            </div>
+          </div>
+          <button @click="previewingDoc = null" class="text-gray-400 hover:text-gray-600">✕</button>
+        </div>
+
+        <div class="mt-4 space-y-3 text-xs">
+          <div class="bg-slate-50 p-3 rounded-xl border border-gray-200 space-y-2 font-mono text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-gray-500 font-sans">ID Dokumen:</span>
+              <span class="font-bold text-gray-800">{{ previewingDoc.id }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500 font-sans">Folder:</span>
+              <span class="text-blue-700 font-bold font-sans">{{ previewingDoc.category }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500 font-sans">Ukuran File:</span>
+              <span class="text-gray-700">{{ previewingDoc.fileSize }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-gray-500 font-sans">Waktu Upload:</span>
+              <span class="text-gray-700">{{ previewingDoc.uploadedAt }}</span>
+            </div>
+            <div class="pt-2 border-t border-gray-200">
+              <span class="text-gray-500 font-sans block mb-1">SHA-256 Digest Cryptographic Proof:</span>
+              <span class="text-[10px] text-emerald-700 break-all bg-emerald-50 p-2 rounded block border border-emerald-200">
+                {{ previewingDoc.sha256 }}
+              </span>
+            </div>
+          </div>
+
+          <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-800 flex items-center space-x-2">
+            <span class="text-base">✅</span>
+            <span class="text-[11px]">Integritas file tervalidasi. Siap dilampirkan pada Wizard Pengajuan Izin tanpa re-upload.</span>
+          </div>
+        </div>
+
+        <div class="mt-5 flex justify-end space-x-2">
+          <button
+            @click="previewingDoc = null"
+            class="px-4 py-2 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 transition"
+          >
+            Tutup
+          </button>
+        </div>
       </div>
     </div>
 
@@ -283,7 +507,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, reactive } from 'vue';
 import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore } from '../stores/companyStore';
 import { usePermitStore } from '../stores/permitStore';
@@ -292,37 +516,148 @@ const vfcStore = useVfcStore();
 const companyStore = useCompanyStore();
 const permitStore = usePermitStore();
 
-const activeCategory = ref('PERUSAHAAN');
+const searchQuery = ref('');
 const showUploadModal = ref(false);
+const showAddCategoryModal = ref(false);
+const previewingDoc = ref<VfcDocument | null>(null);
 const activeQrVc = ref<any>(null);
 
-const categories = [
-  { key: 'PERUSAHAAN', label: 'Perusahaan', icon: '🏢' },
-  { key: 'LOKASI', label: 'Lokasi & GIS', icon: '🗺️' },
-  { key: 'LINGKUNGAN', label: 'Lingkungan', icon: '🌱' },
-  { key: 'PERMOHONAN', label: 'Syarat', icon: '📄' },
-  { key: 'CREDENTIALS', label: 'Verifiable Credentials', icon: '📜' }
-];
+const newCategoryName = ref('');
+const selectedCategoryIcon = ref('📁');
+const availableIcons = ['📁', '💰', '⚙️', '🧪', '⚖️', '📦', '🛡️', '📊', '🤝', '🚢', '🏗️', '📑'];
 
-const selectedFile = ref<File | null>(null);
-const newDoc = ref({
-  category: 'PERUSAHAAN' as const,
-  title: ''
+// Directory Tree expansion state
+const expandedFolders = reactive<Record<string, boolean>>({
+  PERUSAHAAN: true,
+  LOKASI: true,
+  LINGKUNGAN: false,
+  PENGAJUAN: true,
+  CREDENTIALS: true
 });
 
-const filteredDocs = computed(() => {
-  return vfcStore.documentsByCategory(companyStore.activeCompanyId, activeCategory.value);
+interface FolderNode {
+  key: string;
+  label: string;
+  icon: string;
+  isCustom?: boolean;
+}
+
+const standardFolders: FolderNode[] = [
+  { key: 'PERUSAHAAN', label: 'Perusahaan', icon: '🏢', isCustom: false },
+  { key: 'LOKASI', label: 'Lokasi', icon: '🗺️', isCustom: false },
+  { key: 'LINGKUNGAN', label: 'Lingkungan', icon: '🌱', isCustom: false },
+  { key: 'PENGAJUAN', label: 'Pengajuan', icon: '📄', isCustom: false },
+  { key: 'CREDENTIALS', label: 'Credentials', icon: '📜', isCustom: false }
+];
+
+const allFolders = computed<FolderNode[]>(() => {
+  const custom: FolderNode[] = vfcStore.customCategories.map((c) => ({
+    key: c.key,
+    label: c.label,
+    icon: c.icon,
+    isCustom: true
+  }));
+  return [...standardFolders, ...custom];
+});
+
+const allExpanded = computed(() => {
+  return allFolders.value.every((f) => expandedFolders[f.key]);
+});
+
+function toggleFolder(folderKey: string) {
+  expandedFolders[folderKey] = !expandedFolders[folderKey];
+}
+
+function toggleAllFolders() {
+  const target = !allExpanded.value;
+  for (const f of allFolders.value) {
+    expandedFolders[f.key] = target;
+  }
+}
+
+const currentCompanyDocs = computed(() => {
+  return vfcStore.documentsByCompany(companyStore.activeCompanyId);
 });
 
 const approvedCredentials = computed(() => {
   return permitStore.approvedCredentials;
 });
 
-function getCount(category: string) {
-  if (category === 'CREDENTIALS') {
+const totalFilesCount = computed(() => {
+  return currentCompanyDocs.value.length + approvedCredentials.value.length;
+});
+
+const filteredCredentials = computed(() => {
+  if (!searchQuery.value.trim()) return approvedCredentials.value;
+  const q = searchQuery.value.toLowerCase();
+  return approvedCredentials.value.filter(
+    (app) =>
+      app.kbliTitle.toLowerCase().includes(q) ||
+      app.kbliCode.toLowerCase().includes(q) ||
+      app.verifiableCredential?.vcId.toLowerCase().includes(q)
+  );
+});
+
+function getDocsInFolder(categoryKey: string): VfcDocument[] {
+  let docs = vfcStore.documentsByCategory(companyStore.activeCompanyId, categoryKey);
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.toLowerCase();
+    docs = docs.filter(
+      (d) =>
+        d.title.toLowerCase().includes(q) ||
+        d.fileName.toLowerCase().includes(q) ||
+        d.sha256.toLowerCase().includes(q)
+    );
+  }
+  return docs;
+}
+
+function getFolderCount(categoryKey: string): number {
+  if (categoryKey === 'CREDENTIALS') {
     return approvedCredentials.value.length;
   }
-  return vfcStore.documentsByCategory(companyStore.activeCompanyId, category).length;
+  return vfcStore.documentsByCategory(companyStore.activeCompanyId, categoryKey).length;
+}
+
+function getFileIcon(fileName: string): string {
+  const ext = fileName.split('.').pop()?.toLowerCase();
+  if (ext === 'pdf') return '📄';
+  if (ext === 'json' || ext === 'geojson') return '🗺️';
+  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return '🖼️';
+  return '📁';
+}
+
+const selectedFile = ref<File | null>(null);
+const newDoc = ref({
+  category: 'PERUSAHAAN',
+  title: ''
+});
+
+function openUploadModal(categoryKey = 'PERUSAHAAN') {
+  newDoc.value.category = categoryKey === 'CREDENTIALS' ? 'PERUSAHAAN' : categoryKey;
+  newDoc.value.title = '';
+  selectedFile.value = null;
+  showUploadModal.value = true;
+}
+
+function openAddCategoryModal() {
+  newCategoryName.value = '';
+  selectedCategoryIcon.value = '📁';
+  showAddCategoryModal.value = true;
+}
+
+function handleCreateCategory() {
+  if (!newCategoryName.value.trim()) return;
+  const created = vfcStore.addCustomCategory(newCategoryName.value.trim(), selectedCategoryIcon.value);
+  expandedFolders[created.key] = true;
+  showAddCategoryModal.value = false;
+  newCategoryName.value = '';
+}
+
+function deleteCustomFolder(key: string, label: string) {
+  if (confirm(`Apakah Anda yakin ingin menghapus folder kustom "${label}"?`)) {
+    vfcStore.removeCustomCategory(key);
+  }
 }
 
 function onFileSelected(e: Event) {
@@ -335,7 +670,7 @@ function onFileSelected(e: Event) {
 function handleUpload() {
   if (!newDoc.value.title) return;
   const fileName = selectedFile.value ? selectedFile.value.name : 'dokumen_vfc.pdf';
-  const fileSize = selectedFile.value ? `${(selectedFile.value.size / 1024 / 1024).toFixed(1)} MB` : '1.5 MB';
+  const fileSize = selectedFile.value ? `${(selectedFile.value.size / 1024 / 1024).toFixed(1)} MB` : '1.8 MB';
 
   vfcStore.addDocument({
     companyId: companyStore.activeCompanyId,
@@ -346,13 +681,21 @@ function handleUpload() {
     url: '#'
   });
 
+  // Ensure target folder is expanded so user sees the newly uploaded file
+  expandedFolders[newDoc.value.category] = true;
+
   showUploadModal.value = false;
   newDoc.value.title = '';
   selectedFile.value = null;
 }
 
 function previewDoc(doc: VfcDocument) {
-  alert(`Preview Dokumen VFC:\nJudul: ${doc.title}\nNama File: ${doc.fileName}\nUkuran: ${doc.fileSize}\nSHA-256 Hash: ${doc.sha256}`);
+  previewingDoc.value = doc;
+}
+
+function copyHash(hash: string) {
+  navigator.clipboard?.writeText(hash);
+  alert(`SHA-256 hash telah disalin ke clipboard:\n${hash}`);
 }
 
 function formatDate(iso?: string) {
