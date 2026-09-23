@@ -135,13 +135,6 @@ export const usePermitStore = defineStore('permitStore', {
         // Profil & Smart Engine
         projectName: '',
         investmentAmount: 1500000000,
-        locationAddress: '',
-        province: 'Jawa Barat',
-        regency: 'Kab. Bogor',
-        landAreaSqMetres: 1000,
-        laborCount: 20,
-        machineryDetails: '',
-        notes: ''
         status_penanaman_modal: '02' as '01' | '02',
         flag_umkm: 'Y' as 'Y' | 'N',
         laborCount: 25,
@@ -259,15 +252,6 @@ export const usePermitStore = defineStore('permitStore', {
       const isMarine = kbli.kbli_code.startsWith('03');
 
       this.activeWizard.formData = {
-        projectName: `Kegiatan Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
-        investmentAmount: 1500000000,
-        locationAddress: 'Jl. Industri Utama Sentul Kav. 12',
-        province: 'Jawa Barat',
-        regency: 'Kab. Bogor',
-        landAreaSqMetres: 1200,
-        laborCount: 25,
-        machineryDetails: 'Perangkat & Mesin Produksi Sesuai Standar KBLI',
-        notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1'
         projectName: `Operasi Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
         investmentAmount: isLow ? 3500000000 : isHigh ? 25000000000 : 12000000000,
         status_penanaman_modal: '02',

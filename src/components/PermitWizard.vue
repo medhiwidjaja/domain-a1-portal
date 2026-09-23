@@ -9,7 +9,6 @@
       </div>
       <h3 class="text-lg font-bold text-gray-900">Belum Ada KBLI Yang Dipilih</h3>
       <p class="text-xs text-gray-500 max-w-md mx-auto mt-1">
-        Silakan pilih kode KBLI 2020 terlebih dahulu dari menu Pencarian KBLI untuk memulai formulir wizard permohonan izin.
         Silakan pilih kode KBLI dan ruang lingkup kegiatan (scope) terlebih dahulu dari menu Pencarian KBLI untuk memulai formulir Persyaratan Dasar.
       </p>
       <button
@@ -22,15 +21,6 @@
 
     <!-- Active Wizard Flow -->
     <div v-else class="space-y-6">
-      <!-- Wizard Stepper Header -->
-      <div class="flex items-center justify-between pb-4 border-b border-gray-200">
-        <div>
-          <span class="text-xs font-mono font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded">
-            Wizard Step {{ permitStore.activeWizard.step }} dari 4
-          </span>
-          <h2 class="text-xl font-bold text-gray-900 mt-1">
-            Formulir Permohonan: KBLI {{ permitStore.activeWizard.kbli.kbli_code }} - {{ permitStore.activeWizard.kbli.title }}
-          </h2>
       <!-- Stepper Header -->
       <div class="border-b border-gray-200 pb-4">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -57,15 +47,9 @@
             </button>
           </div>
         </div>
-        <button
-          @click="$emit('switch-tab', 'kbli')"
-          class="text-xs font-medium text-gray-500 hover:text-gray-800"
-        >
-          ← Ganti KBLI
-        </button>
 
         <!-- Visual Step Breadcrumbs -->
-        <div class="grid grid-cols-2 md:grid-cols-6 gap-2 mt-4 text-[11px] font-semibold text-center">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-4 text-[11px] font-semibold text-center">
           <div
             v-for="(st, idx) in wizardSteps"
             :key="st.step"
@@ -83,34 +67,26 @@
         </div>
       </div>
 
-      <!-- STEP 1: Upfront DMN Rule Preview -->
       <!-- ======================================================== -->
       <!-- STEP 1: Upfront DMN Rule Transparency & Smart Engine Profile -->
       <!-- ======================================================== -->
       <div v-if="permitStore.activeWizard.step === 1" class="space-y-6">
-        <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-5 shadow-xs">
         <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-5 shadow-xs space-y-4">
           <div class="flex items-start justify-between">
             <div>
               <div class="flex items-center space-x-2">
                 <span class="bg-blue-600 text-white font-mono text-[10px] font-bold px-2 py-0.5 rounded">
-                  Preview DMN Evaluasi Rules
                   Smart Engine Validasi
                 </span>
                 <span class="text-xs font-semibold text-blue-900">
-                  Regulasi PP 28/2025 (Current Cohort)
                   Regulasi PP 5/2021 & PP 28/2025
                 </span>
               </div>
-              <h3 class="text-base font-bold text-gray-900 mt-2">
-                Upfront Transparency: Persyaratan & SLA KBLI {{ permitStore.activeWizard.kbli.kbli_code }}
               <h3 class="text-base font-bold text-gray-900 mt-1">
                 Tinjauan Persyaratan Dasar KBLI {{ permitStore.activeWizard.kbli.kbli_code }}
               </h3>
             </div>
             <div class="text-right">
-              <span class="text-[10px] text-gray-500 block">Kewenangan Regulator</span>
-              <span class="text-xs font-bold text-blue-800">{{ activeScope?.licensing_requirements?.[0]?.authority || permitStore.activeWizard.kbli.authority }}</span>
               <span class="text-[10px] text-gray-500 block">Kewenangan Verifikasi</span>
               <span class="text-xs font-bold text-blue-800">
                 {{ activeScopeReq?.authority || permitStore.activeWizard.kbli.authority }}
@@ -119,7 +95,6 @@
           </div>
 
           <!-- Selected Scope Banner -->
-          <div v-if="activeScope" class="mt-3 bg-blue-100/70 p-3 rounded-lg border border-blue-200">
           <div v-if="activeScope" class="bg-blue-100/70 p-3 rounded-lg border border-blue-200">
             <div class="flex items-center space-x-2">
               <span class="text-[10px] font-bold bg-blue-700 text-white px-2 py-0.5 rounded font-mono">
@@ -133,11 +108,9 @@
           </div>
 
           <!-- 4 Pillar Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mt-4 text-xs">
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-2xs">
               <span class="text-gray-500 block">Tingkat Risiko</span>
-              <span class="font-bold text-sm text-gray-900">{{ permitStore.activeWizard.kbli.risk_level }}</span>
               <span class="font-bold text-sm text-gray-900">
                 {{ activeScopeReq?.risk_level || permitStore.activeWizard.kbli.risk_level }}
               </span>
@@ -145,7 +118,6 @@
 
             <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-2xs">
               <span class="text-gray-500 block">Output Dokumen Izin</span>
-              <span class="font-bold text-sm text-blue-700">{{ permitStore.activeWizard.kbli.perizinan_usaha }}</span>
               <span class="font-bold text-sm text-blue-700">
                 {{ activeScopeReq?.perizinan_usaha?.join(', ') || permitStore.activeWizard.kbli.perizinan_usaha }}
               </span>
@@ -153,23 +125,19 @@
 
             <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-2xs">
               <span class="text-gray-500 block">Target Waktu SLA</span>
-              <span class="font-bold text-sm text-emerald-700">{{ permitStore.activeWizard.kbli.processing_time }}</span>
               <span class="font-bold text-sm text-emerald-700">
                 {{ activeScopeReq?.processing_time || permitStore.activeWizard.kbli.processing_time }}
               </span>
             </div>
 
             <div class="bg-white p-3 rounded-lg border border-blue-100 shadow-2xs">
-              <span class="text-gray-500 block">Kewajiban Pengawasan</span>
-              <span class="font-bold text-sm text-amber-700">LKPM Triwulanan</span>
               <span class="text-gray-500 block">Jalur Persyaratan Dasar</span>
               <span class="font-bold text-sm text-purple-700">KKPR, PL, PBG/SLF</span>
             </div>
           </div>
-        </div>
 
           <!-- Requirements checklist preview -->
-          <div class="mt-4 bg-white p-4 rounded-lg border border-blue-100 text-xs">
+          <div class="bg-white p-4 rounded-lg border border-blue-100 text-xs">
             <span class="font-bold text-gray-900 block mb-2">📋 Dokumen & Form Yang Wajib Dilengkapi Saat Pengajuan:</span>
             <ul class="space-y-1 text-gray-700">
               <li class="flex items-center space-x-2">
@@ -189,6 +157,9 @@
                 <span>{{ req }}</span>
               </li>
             </ul>
+          </div>
+        </div>
+
         <!-- Smart Engine Investment & Profile Form -->
         <div class="space-y-4">
           <h4 class="font-bold text-sm text-gray-900 border-b pb-2 flex items-center justify-between">
@@ -265,24 +236,17 @@
           </div>
         </div>
 
-        <div class="flex justify-end pt-4">
         <div class="flex justify-end pt-4 border-t">
           <button
-            @click="permitStore.setWizardStep(2)"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
             @click="goToNextStep(2)"
             :disabled="!investmentValidation.isValid"
             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition"
           >
-            Lanjut ke Isian Parameter Usaha & Lokasi →
             Lanjut ke Persyaratan Dasar 1: KKPR (Tata Ruang) →
           </button>
         </div>
       </div>
 
-      <!-- STEP 2: Form Parameters & Location GIS -->
-      <div v-else-if="permitStore.activeWizard.step === 2" class="space-y-4">
-        <h3 class="font-bold text-sm text-gray-900 border-b pb-2">Isian Data Proyek Usaha & Lokasi Spatial (GIS)</h3>
       <!-- ======================================================== -->
       <!-- STEP 2: Persyaratan Dasar 1 — KKPR (Tata Ruang & Lokasi) -->
       <!-- ======================================================== -->
@@ -297,14 +261,6 @@
           </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-          <div>
-            <label class="block font-bold text-gray-700 mb-1">Nama Proyek Kegiatan Usaha</label>
-            <input
-              v-model="permitStore.activeWizard.formData.projectName"
-              type="text"
-              class="w-full p-2.5 border rounded-lg bg-gray-50 text-gray-900"
-            />
         <!-- Matra & Tipe Lokasi -->
         <div class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
@@ -345,13 +301,6 @@
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-gray-700 mb-1">Rencana Nilai Investasi (IDR)</label>
-            <input
-              v-model.number="permitStore.activeWizard.formData.investmentAmount"
-              type="number"
-              class="w-full p-2.5 border rounded-lg bg-gray-50 text-gray-900 font-mono"
-            />
           <!-- Geospasial Coordinates & Address -->
           <div class="grid grid-cols-1 md:grid-cols-4 gap-3 text-xs">
             <div>
@@ -392,13 +341,6 @@
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-gray-700 mb-1">Alamat Lokasi Usaha</label>
-            <input
-              v-model="permitStore.activeWizard.formData.locationAddress"
-              type="text"
-              class="w-full p-2.5 border rounded-lg text-gray-900"
-            />
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
             <div class="md:col-span-2">
               <label class="block font-bold text-gray-700 mb-1">Alamat Lengkap Usaha</label>
@@ -418,13 +360,6 @@
             </div>
           </div>
 
-          <div>
-            <label class="block font-bold text-gray-700 mb-1">Jumlah Tenaga Kerja Indonesia</label>
-            <input
-              v-model.number="permitStore.activeWizard.formData.laborCount"
-              type="number"
-              class="w-full p-2.5 border rounded-lg text-gray-900"
-            />
           <!-- Kawasan Status Controls -->
           <div class="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-3">
             <span class="font-bold text-gray-900 block">Karakteristik & Status Peruntukan Wilayah:</span>
@@ -456,13 +391,6 @@
             </div>
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block font-bold text-gray-700 mb-1">Detail Spesifikasi Mesin & Fasilitas Utama</label>
-            <textarea
-              v-model="permitStore.activeWizard.formData.machineryDetails"
-              rows="2"
-              class="w-full p-2.5 border rounded-lg text-gray-900"
-            ></textarea>
           <!-- Evaluation Result Banner -->
           <div
             :class="[
@@ -589,26 +517,17 @@
             @click="permitStore.setWizardStep(1)"
             class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
           >
-            ← Kembali
             ← Kembali ke Profil
           </button>
           <button
-            @click="permitStore.setWizardStep(3)"
             @click="goToNextStep(3)"
             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
           >
-            Lanjut ke Lampiran Dokumen VFC Vault →
             Lanjut ke Persyaratan Dasar 2: Persetujuan Lingkungan →
           </button>
         </div>
       </div>
 
-      <!-- STEP 3: VFC Document Selection -->
-      <div v-else-if="permitStore.activeWizard.step === 3" class="space-y-4">
-        <h3 class="font-bold text-sm text-gray-900 border-b pb-2">Pilih Dokumen Prasyarat dari Virtual Filing Cabinet (VFC)</h3>
-        <p class="text-xs text-gray-500">
-          Pilih dokumen legalitas yang telah tersimpan pada VFC Zone 1 Anda untuk dilampirkan secara otomatis pada permohonan ini tanpa upload ulang.
-        </p>
       <!-- ======================================================== -->
       <!-- STEP 3: Persyaratan Dasar 2 — Persetujuan Lingkungan (PL)-->
       <!-- ======================================================== -->
@@ -623,19 +542,6 @@
           </p>
         </div>
 
-        <div class="space-y-2">
-          <div
-            v-for="doc in currentCompanyDocs"
-            :key="doc.id"
-            @click="permitStore.toggleVfcDocSelection(doc.id)"
-            :class="[
-              'p-4 border rounded-xl cursor-pointer transition flex items-center justify-between',
-              permitStore.activeWizard.selectedVfcDocIds.includes(doc.id)
-                ? 'border-blue-500 bg-blue-50/60 shadow-xs'
-                : 'border-gray-200 bg-white hover:border-gray-300'
-            ]"
-          >
-            <div class="flex items-center space-x-3">
         <div class="space-y-4">
           <!-- Environmental Instrument Evaluation Banner -->
           <div class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl text-xs space-y-2">
@@ -697,8 +603,6 @@
             <div class="flex items-start space-x-2 pt-2">
               <input
                 type="checkbox"
-                :checked="permitStore.activeWizard.selectedVfcDocIds.includes(doc.id)"
-                class="w-4 h-4 text-blue-600 rounded"
                 id="checkSppl"
                 v-model="permitStore.activeWizard.formData.flag_pernyataan_sppl"
                 class="w-4 h-4 text-emerald-600 rounded mt-0.5"
@@ -726,8 +630,6 @@
           <div class="border border-gray-200 rounded-xl p-4 bg-white space-y-3">
             <div class="flex items-center justify-between">
               <div>
-                <span class="text-xs font-bold text-gray-900 block">{{ doc.title }}</span>
-                <span class="text-[11px] font-mono text-gray-500">{{ doc.fileName }} • {{ doc.fileSize }}</span>
                 <span class="font-bold text-xs text-gray-900 block">Lampiran Dokumen Lingkungan Hidup</span>
                 <span class="text-[11px] text-gray-500">Simpan pada VFC folder LINGKUNGAN</span>
               </div>
@@ -736,9 +638,6 @@
               </span>
             </div>
 
-            <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded">
-              Folder: {{ doc.category }}
-            </span>
             <!-- Existing VFC Document Detected or Upload New -->
             <div v-if="attachedEnvDoc" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
               <div class="flex items-center space-x-2 text-xs">
@@ -781,7 +680,6 @@
             @click="permitStore.setWizardStep(2)"
             class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
           >
-            ← Kembali
             ← Kembali ke KKPR
           </button>
           <button
@@ -997,14 +895,11 @@
             @click="showPreCommitModal = true"
             class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
           >
-            Tinjau & Lakukan Pre-Commit Hashing →
             Tinjau Komitmen & Segel SHA-256 →
           </button>
         </div>
       </div>
 
-      <!-- STEP 5: Success & Submitted -->
-      <div v-else-if="permitStore.activeWizard.step === 5" class="text-center py-12 space-y-4">
       <!-- ======================================================== -->
       <!-- STEP 6: Success & Transmitted -->
       <!-- ======================================================== -->
@@ -1014,9 +909,6 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
           </svg>
         </div>
-        <h2 class="text-2xl font-extrabold text-gray-900">Permohonan Berhasil Disubmit!</h2>
-        <p class="text-xs text-gray-600 max-w-md mx-auto">
-          Paket permohonan telah disegel dengan SHA-256 payload digest dan diteruskan ke Universal Workflow Orchestrator (Domain B2).
         <h2 class="text-2xl font-extrabold text-gray-900">Permohonan Persyaratan Dasar Berhasil Disubmit!</h2>
         <p class="text-xs text-gray-600 max-w-md mx-auto leading-relaxed">
           Seluruh persyaratan dasar (KKPR, Persetujuan Lingkungan, PBG/SLF) dan lampiran dokumen VFC telah disegel dengan SHA-256 Payload Digest dan diteruskan ke Universal Workflow Orchestrator (Domain B2).
@@ -1041,7 +933,6 @@
 
     <!-- Pre-Commit Modal -->
     <div v-if="showPreCommitModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-gray-100">
       <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
         <div class="flex items-center space-x-3 text-amber-600 pb-4 border-b border-gray-100">
           <div class="p-3 bg-amber-100 rounded-xl">
@@ -1050,8 +941,6 @@
             </svg>
           </div>
           <div>
-            <h3 class="text-base font-bold text-gray-900">Konfirmasi Pre-Commit & Penyegelan Snapshot</h3>
-            <p class="text-xs text-gray-500">Pernyataan Hukum & Transmisi Data Resmi</p>
             <h3 class="text-base font-bold text-gray-900">Penyegelan Snapshot Persyaratan Dasar (Pre-Commit)</h3>
             <p class="text-xs text-gray-500">Pernyataan Hukum & Transmisi Data ke Domain B2</p>
           </div>
@@ -1090,19 +979,18 @@
           <ul class="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
             <li class="flex items-start space-x-2">
               <span class="text-blue-600 font-bold">1.</span>
-              <span>Membuat **Submission Snapshot** permanen yang menyegel formulir dan salinan dokumen VFC.</span>
+              <span>Membuat <strong>Submission Snapshot</strong> permanen yang menyegel formulir dan salinan dokumen VFC.</span>
             </li>
             <li class="flex items-start space-x-2">
               <span class="text-blue-600 font-bold">2.</span>
-              <span>Menghasilkan hash deterministik SHA-256 (`payload_digest`) sebagai bukti integritas data.</span>
+              <span>Menghasilkan hash deterministik SHA-256 (<code>payload_digest</code>) sebagai bukti integritas data.</span>
             </li>
             <li class="flex items-start space-x-2">
               <span class="text-blue-600 font-bold">3.</span>
-              <span>Meneruskan paket permohonan ke **Domain B2 (Workflow Orchestrator)** untuk verifikasi teknis K/L/D.</span>
+              <span>Meneruskan paket permohonan ke <strong>Domain B2 (Workflow Orchestrator)</strong> untuk verifikasi teknis K/L/D.</span>
             </li>
           </ul>
 
-          <!-- SHA-256 Digest Preview -->
           <!-- Deterministic SHA-256 Digest Preview -->
           <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px]">
             <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider mb-1">Simulasi SHA-256 Payload Digest:</span>
@@ -1110,7 +998,6 @@
           </div>
 
           <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] leading-relaxed">
-            ⚠️ <strong>Penting:</strong> Seluruh data yang disampaikan adalah sah dan dapat dipertanggungjawabkan secara hukum. Draf tidak dapat diubah setelah transmisi ke regulator.
             ⚠️ <strong>Pernyataan Kepatuhan:</strong> Seluruh data formulir persyaratan dasar yang disampaikan adalah sah dan dapat dipertanggungjawabkan secara hukum. Draf tidak dapat diubah setelah transmisi.
           </div>
         </div>
@@ -1120,7 +1007,6 @@
             @click="showPreCommitModal = false"
             class="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition"
           >
-            Kembali ke Form
             Batal
           </button>
           <button
@@ -1130,7 +1016,6 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
             </svg>
-            <span>Konfirmasi & Kirim Permohonan</span>
             <span>Segel & Kirim Permohonan</span>
           </button>
         </div>
@@ -1142,7 +1027,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { usePermitStore } from '../stores/permitStore';
-import { useVfcStore } from '../stores/vfcStore';
 import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore } from '../stores/companyStore';
 
@@ -1311,4 +1195,3 @@ function handleConfirmSubmit() {
   permitStore.setWizardStep(6);
 }
 </script>
-
