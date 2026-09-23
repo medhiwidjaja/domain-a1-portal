@@ -64,7 +64,6 @@ export const usePermitStore = defineStore('permitStore', {
       {
         id: 'PERMIT-2026-001',
         companyId: 'COMP-001',
-        companyName: 'PT FairWorx Indonesia Enterprise',
         companyName: 'PT Nusantara Pratama Enterprise',
         kbliCode: '03111',
         kbliTitle: 'Penangkapan Pisces/Ikan Bersirip di Laut',
@@ -93,7 +92,6 @@ export const usePermitStore = defineStore('permitStore', {
       {
         id: 'PERMIT-2026-002',
         companyId: 'COMP-001',
-        companyName: 'PT FairWorx Indonesia Enterprise',
         companyName: 'PT Nusantara Pratama Enterprise',
         kbliCode: '46324',
         kbliTitle: 'Perdagangan Besar Daging Sapi dan Daging Olahan',
