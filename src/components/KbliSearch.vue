@@ -49,7 +49,7 @@
         </div>
 
         <div
-          v-for="item in permitStore.filteredCatalog.slice(0, 15)"
+          v-for="item in permitStore.filteredCatalog.slice(0, displayLimit)"
           :key="item.kbli_code"
           class="border border-gray-200 rounded-xl p-5 hover:border-blue-400 hover:shadow-md transition bg-white"
         >
@@ -91,6 +91,15 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <div v-if="permitStore.filteredCatalog.length > displayLimit" class="text-center pt-2">
+          <button
+            @click="displayLimit += 30"
+            class="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition border border-slate-300"
+          >
+            Tampilkan Lebih Banyak (Menampilkan {{ Math.min(displayLimit, permitStore.filteredCatalog.length) }} dari {{ permitStore.filteredCatalog.length }})
+          </button>
         </div>
       </div>
     </div>
@@ -192,17 +201,20 @@ import { usePermitStore, type KbliItem } from '../stores/permitStore';
 
 const permitStore = usePermitStore();
 const detailModalKbli = ref<KbliItem | null>(null);
+const displayLimit = ref(20);
 
 const emit = defineEmits(['select-kbli']);
 
 function getRiskBadgeClass(code: string) {
   switch (code) {
     case 'R':
+    case 'RE':
       return 'text-xs font-bold bg-green-100 text-green-800 px-2.5 py-0.5 rounded-md';
     case 'MR':
       return 'text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-md';
     case 'MT':
       return 'text-xs font-bold bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-md';
+    case 'T':
     case 'TI':
       return 'text-xs font-bold bg-red-100 text-red-800 px-2.5 py-0.5 rounded-md';
     default:

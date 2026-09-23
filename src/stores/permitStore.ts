@@ -147,7 +147,12 @@ export const usePermitStore = defineStore('permitStore', {
     filteredCatalog(state): KbliItem[] {
       let list = state.catalog;
       if (state.selectedRiskFilter !== 'ALL') {
-        list = list.filter((item) => item.risk_code === state.selectedRiskFilter);
+        const filter = state.selectedRiskFilter;
+        list = list.filter((item) => {
+          if (filter === 'R') return item.risk_code === 'R' || item.risk_code === 'RE';
+          if (filter === 'TI') return item.risk_code === 'TI' || item.risk_code === 'T';
+          return item.risk_code === filter;
+        });
       }
       if (!state.searchQuery.trim()) {
         return list;
