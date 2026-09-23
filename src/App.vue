@@ -218,6 +218,17 @@ const totalVfcItems = computed(() => {
 
 function onSelectKbliForWizard(kbli: KbliItem) {
   permitStore.startWizardForKbli(kbli);
+function onSelectKbliForWizard(payload: { kbli: KbliItem; scope?: any } | KbliItem, maybeScope?: any) {
+  let kbli: KbliItem;
+  let scope: any;
+  if (payload && 'kbli' in payload) {
+    kbli = payload.kbli;
+    scope = payload.scope;
+  } else {
+    kbli = payload as KbliItem;
+    scope = maybeScope;
+  }
+  permitStore.startWizardForKbli(kbli, scope);
   activeTab.value = 'wizard';
 }
 </script>

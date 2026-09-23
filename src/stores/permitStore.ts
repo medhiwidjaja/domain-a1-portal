@@ -19,6 +19,8 @@ export interface PermitApplication {
   companyName: string;
   kbliCode: string;
   kbliTitle: string;
+  scopeSequence?: string;
+  scopeTitle?: string;
   riskCode: string;
   riskLevel: string;
   authority: string;
@@ -127,6 +129,7 @@ export const usePermitStore = defineStore('permitStore', {
 
     activeWizard: {
       kbli: null as KbliItem | null,
+      selectedScope: null as any | null,
       step: 1,
       formData: {
         projectName: '',
@@ -183,85 +186,104 @@ export const usePermitStore = defineStore('permitStore', {
 
   actions: {
     startWizardForKbli(kbli: KbliItem) {
-      this.activeWizard.kbli = kbli;
-      this.activeWizard.step = 1;
-      this.activeWizard.formData = {
-        projectName: `Kegiatan Usaha ${kbli.title}`,
-        investmentAmount: 1500000000,
-        locationAddress: 'Jl. Industri Utama Sentul Kav. 12',
-        province: 'Jawa Barat',
-        regency: 'Kab. Bogor',
-        landAreaSqMetres: 1200,
-        laborCount: 25,
-        machineryDetails: 'Perangkat & Mesin Produksi Sesuai Standar KBLI',
-        notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1'
-      };
-      this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-002'];
-    },
+      startWizardForKbli(kbli: KbliItem, scope ?: any) {
+        const chosenScope = scope || (kbli.scopes && kbli.scopes[0]) || null;
+        this.activeWizard.kbli = kbli;
+        this.activeWizard.selectedScope = chosenScope;
+        this.activeWizard.step = 1;
+        this.activeWizard.formData = {
+          projectName: `Kegiatan Usaha ${kbli.title}`,
+          projectName: `Kegiatan Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
+          investmentAmount: 1500000000,
+          locationAddress: 'Jl. Industri Utama Sentul Kav. 12',
+          province: 'Jawa Barat',
+          regency: 'Kab. Bogor',
+          landAreaSqMetres: 1200,
+          laborCount: 25,
+          machineryDetails: 'Perangkat & Mesin Produksi Sesuai Standar KBLI',
+          notes: 'Permohonan diajukan melalui portal OSS v2 Domain A1'
+        };
+        this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-002'];
+      },
 
-    setWizardStep(step: number) {
-      this.activeWizard.step = step;
-    },
+      setWizardStep(step: number) {
+        this.activeWizard.step = step;
+      },
 
-    toggleVfcDocSelection(docId: string) {
-      const idx = this.activeWizard.selectedVfcDocIds.indexOf(docId);
-      if (idx >= 0) {
-        this.activeWizard.selectedVfcDocIds.splice(idx, 1);
-      } else {
-        this.activeWizard.selectedVfcDocIds.push(docId);
-      }
-    },
+      toggleVfcDocSelection(docId: string) {
+        const idx = this.activeWizard.selectedVfcDocIds.indexOf(docId);
+        if (idx >= 0) {
+          this.activeWizard.selectedVfcDocIds.splice(idx, 1);
+        } else {
+          this.activeWizard.selectedVfcDocIds.push(docId);
+        }
+      },
 
-    submitApplication() {
-      if (!this.activeWizard.kbli) return null;
-      const companyStore = useCompanyStore();
-      const kbli = this.activeWizard.kbli;
+      submitApplication() {
+        if (!this.activeWizard.kbli) return null;
+        const companyStore = useCompanyStore();
+        const kbli = this.activeWizard.kbli;
+        const scope = this.activeWizard.selectedScope;
+        const reqObj = scope?.licensing_requirements?.[0];
 
-      const digest = Array.from({ length: 64 }, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      ).join('');
+        const riskCode = reqObj?.risk_code || kbli.risk_code;
+        const riskLevel = reqObj?.risk_level || kbli.risk_level;
+        const authority = reqObj?.authority || kbli.authority;
+        const processingTime = reqObj?.processing_time || kbli.processing_time;
 
-      const newPermitId = `PERMIT-2026-${Math.floor(100 + Math.random() * 900)}`;
-      const isAutoApprove = kbli.risk_code === 'R' || kbli.risk_code === 'MR';
+        const digest = Array.from({ length: 64 }, () =>
+          Math.floor(Math.random() * 16).toString(16)
+        ).join('');
 
-      const newApp: PermitApplication = {
-        id: newPermitId,
-        companyId: companyStore.activeCompanyId,
-        companyName: companyStore.activeCompany.name,
-        kbliCode: kbli.kbli_code,
-        kbliTitle: kbli.title,
-        riskCode: kbli.risk_code,
-        riskLevel: kbli.risk_level,
-        authority: kbli.authority,
-        processingTime: kbli.processing_time,
-        status: isAutoApprove ? 'APPROVED' : 'IN_REVIEW',
-        stepIndex: isAutoApprove ? 4 : 2,
-        submittedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
-        approvedAt: isAutoApprove
-          ? new Date().toISOString().replace('T', ' ').slice(0, 16)
-          : undefined,
-        slaDeadlineSeconds: isAutoApprove ? 0 : 259200,
-        payloadDigest: digest,
-        attachedVfcDocIds: [...this.activeWizard.selectedVfcDocIds],
-        formData: { ...this.activeWizard.formData },
-        verifiableCredential: isAutoApprove
-          ? {
-            vcId: `urn:uuid:vc-bkpm-2026-${kbli.kbli_code}-${Math.floor(10000 + Math.random() * 90000)}`,
-            issuedAt: new Date().toISOString(),
-            issuer: 'did:oss:bkpm:gov:id',
-            credentialType:
-              kbli.risk_code === 'R'
-                ? 'VerifiableNIB'
-                : 'VerifiableSertifikatStandar',
-            proofHash: digest,
-            qrCodeData: `https://oss.go.id/verify/${newPermitId}`
-          }
+        const newPermitId = `PERMIT-2026-${Math.floor(100 + Math.random() * 900)}`;
+        const isAutoApprove = kbli.risk_code === 'R' || kbli.risk_code === 'MR';
+        const isAutoApprove = riskCode === 'R' || riskCode === 'RE' || riskCode === 'MR';
+
+        const newApp: PermitApplication = {
+          id: newPermitId,
+          companyId: companyStore.activeCompanyId,
+          companyName: companyStore.activeCompany.name,
+          kbliCode: kbli.kbli_code,
+          kbliTitle: kbli.title,
+          riskCode: kbli.risk_code,
+          riskLevel: kbli.risk_level,
+          authority: kbli.authority,
+          processingTime: kbli.processing_time,
+          scopeSequence: scope?.sequence,
+          scopeTitle: scope?.title,
+          riskCode: riskCode,
+          riskLevel: riskLevel,
+          authority: authority,
+          processingTime: processingTime,
+          status: isAutoApprove ? 'APPROVED' : 'IN_REVIEW',
+          stepIndex: isAutoApprove ? 4 : 2,
+          submittedAt: new Date().toISOString().replace('T', ' ').slice(0, 16),
+          approvedAt: isAutoApprove
+            ? new Date().toISOString().replace('T', ' ').slice(0, 16)
+            : undefined,
+          slaDeadlineSeconds: isAutoApprove ? 0 : 259200,
+          payloadDigest: digest,
+          attachedVfcDocIds: [...this.activeWizard.selectedVfcDocIds],
+          formData: { ...this.activeWizard.formData },
+          verifiableCredential: isAutoApprove
+            ? {
+              vcId: `urn:uuid:vc-bkpm-2026-${kbli.kbli_code}-${Math.floor(10000 + Math.random() * 90000)}`,
+              issuedAt: new Date().toISOString(),
+              issuer: 'did:oss:bkpm:gov:id',
+              credentialType:
+                kbli.risk_code === 'R'
+              riskCode === 'R' || riskCode === 'RE'
+              ? 'VerifiableNIB'
+              : 'VerifiableSertifikatStandar',
+          proofHash: digest,
+          qrCodeData: `https://oss.go.id/verify/${newPermitId}`
+        }
           : undefined
       };
 
-      this.applications.unshift(newApp);
-      this.activeWizard.step = 5;
-      return newApp;
+this.applications.unshift(newApp);
+this.activeWizard.step = 5;
+return newApp;
     }
   }
 });
