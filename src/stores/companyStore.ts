@@ -19,6 +19,7 @@ export const useCompanyStore = defineStore('companyStore', {
       {
         id: 'COMP-001',
         name: 'PT FairWorx Indonesia Enterprise',
+        name: 'PT Nusantara Pratama Enterprise',
         type: 'PT' as const,
         nib: '9120001234567',
         npwp: '01.234.567.8-012.000',
