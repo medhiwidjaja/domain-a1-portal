@@ -11,6 +11,15 @@ export interface BusinessEntity {
   capital: number; // IDR
   role: string;
   privileges: string[];
+  status_penanaman_modal?: '01' | '02'; // 01 PMA, 02 PMDN
+  ahu_sk_number?: string;
+  ahu_date?: string;
+  notary_name?: string;
+  kswp_status?: 'VALID' | 'INVALID';
+  tax_compliance?: string;
+  scale?: 'Mikro' | 'Kecil' | 'Menengah' | 'Besar';
+  directors?: Array<{ name: string; nik: string; position: string }>;
+  shareholders?: Array<{ name: string; percentage: number; nationality: string }>;
 }
 
 export const useCompanyStore = defineStore('companyStore', {
@@ -24,8 +33,23 @@ export const useCompanyStore = defineStore('companyStore', {
         npwp: '01.234.567.8-012.000',
         address: 'Jl. Jendral Sudirman Kav. 45, Jakarta Selatan',
         sector: 'Teknologi & Kelautan',
-        capital: 5000000000,
+        capital: 15000000000,
         role: 'Direktur Utama',
+        status_penanaman_modal: '02' as const, // PMDN
+        ahu_sk_number: 'AHU-0038921.AH.01.01.TAHUN 2024',
+        ahu_date: '2024-04-18',
+        notary_name: 'Bambang Soeprapto, S.H., M.Kn.',
+        kswp_status: 'VALID' as const,
+        tax_compliance: 'Wajib Pajak Patuh (SPT Tahunan Terpenuhi)',
+        scale: 'Besar' as const,
+        directors: [
+          { name: 'Budi Santoso', nik: '3175012345678000', position: 'Direktur Utama' },
+          { name: 'Siti Rahmawati', nik: '3175087654321000', position: 'Direktur Keuangan' }
+        ],
+        shareholders: [
+          { name: 'Budi Santoso', percentage: 60, nationality: 'Indonesia' },
+          { name: 'PT Mitra Investama Bersama', percentage: 40, nationality: 'Indonesia' }
+        ],
         privileges: [
           'PRIV_DRAFT_CREATE_EDIT',
           'PRIV_DRAFT_SUBMIT',
@@ -44,6 +68,20 @@ export const useCompanyStore = defineStore('companyStore', {
         sector: 'Perikanan & Pengolahan',
         capital: 800000000,
         role: 'Kolaborator Staf Perizinan',
+        status_penanaman_modal: '02' as const,
+        ahu_sk_number: 'AHU-0012984.CV.01.02.TAHUN 2023',
+        ahu_date: '2023-08-10',
+        notary_name: 'Hendro Wijaya, S.H.',
+        kswp_status: 'VALID' as const,
+        tax_compliance: 'Status KSWP Memenuhi Syarat',
+        scale: 'Kecil' as const,
+        directors: [
+          { name: 'Ahmad Dahlan', nik: '3578012345678001', position: 'Persero Pengurus' }
+        ],
+        shareholders: [
+          { name: 'Ahmad Dahlan', percentage: 70, nationality: 'Indonesia' },
+          { name: 'Faisal Basri', percentage: 30, nationality: 'Indonesia' }
+        ],
         privileges: [
           'PRIV_DRAFT_CREATE_EDIT',
           'PRIV_VFC_DOCUMENT_MANAGE',
@@ -60,6 +98,16 @@ export const useCompanyStore = defineStore('companyStore', {
         sector: 'Usaha Mikro Kuliner & Perdagangan',
         capital: 50000000,
         role: 'Pemilik Usaha',
+        status_penanaman_modal: '02' as const,
+        kswp_status: 'VALID' as const,
+        tax_compliance: 'Wajib Pajak Orang Pribadi Valid',
+        scale: 'Mikro' as const,
+        directors: [
+          { name: 'Budi Santoso', nik: '3175012345678000', position: 'Pemilik' }
+        ],
+        shareholders: [
+          { name: 'Budi Santoso', percentage: 100, nationality: 'Indonesia' }
+        ],
         privileges: [
           'PRIV_DRAFT_CREATE_EDIT',
           'PRIV_DRAFT_SUBMIT',
@@ -85,6 +133,15 @@ export const useCompanyStore = defineStore('companyStore', {
     setActiveCompany(id: string) {
       if (this.companies.some((c) => c.id === id)) {
         this.activeCompanyId = id;
+      }
+    },
+    updateCompanyProfile(id: string, updatedData: Partial<BusinessEntity>) {
+      const index = this.companies.findIndex((c) => c.id === id);
+      if (index !== -1) {
+        this.companies[index] = {
+          ...this.companies[index],
+          ...updatedData
+        };
       }
     }
   }
