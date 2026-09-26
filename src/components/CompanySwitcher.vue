@@ -37,11 +37,6 @@
           </span>
         </div>
 
-        <div class="hidden lg:flex items-center space-x-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg text-gray-600 text-xs">
-          <span>NPWP:</span>
-          <span class="font-mono font-medium text-gray-900">{{ companyStore.activeCompany.npwp }}</span>
-        </div>
-
         <div class="flex items-center space-x-1">
           <span
             v-if="companyStore.canSubmit"

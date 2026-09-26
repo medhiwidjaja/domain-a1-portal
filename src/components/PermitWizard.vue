@@ -1,5 +1,23 @@
 <template>
-  <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+  <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm relative">
+    <!-- Save Toast Notification -->
+    <transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="transform -translate-y-2 opacity-0"
+      enter-to-class="transform translate-y-0 opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="transform translate-y-0 opacity-100"
+      leave-to-class="transform -translate-y-2 opacity-0"
+    >
+      <div
+        v-if="saveToastMessage"
+        class="fixed top-20 right-6 z-[110] bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2.5 border border-slate-700 text-xs font-semibold"
+      >
+        <span class="text-emerald-400 text-base">💾</span>
+        <span>{{ saveToastMessage }}</span>
+      </div>
+    </transition>
+
     <!-- State 0: No KBLI Selected -->
     <div v-if="!permitStore.activeWizard.kbli" class="text-center py-16">
       <div class="p-4 bg-blue-50 text-blue-600 rounded-2xl inline-block mb-3">
@@ -48,29 +66,80 @@
           </div>
         </div>
 
-        <!-- Visual Step Breadcrumbs -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mt-4 text-[11px] font-semibold text-center">
-          <div
-            v-for="(st, idx) in wizardSteps"
-            :key="st.step"
-            :class="[
-              'p-2 rounded-lg border transition',
-              permitStore.activeWizard.step === st.step
-                ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                : permitStore.activeWizard.step > st.step
-                ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                : 'bg-gray-50 text-gray-400 border-gray-200'
-            ]"
-          >
-            <div class="truncate">{{ idx + 1 }}. {{ st.shortLabel }}</div>
+        <!-- Accordion Toolbar -->
+        <div class="mt-4 flex items-center justify-between text-xs pt-3 border-t border-gray-100">
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-semibold text-gray-600">Alur Pengisian Form:</span>
+            <span class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono font-bold">
+              Accordion Wizard (5 Tahapan)
+            </span>
           </div>
+          <button
+            type="button"
+            @click="toggleAllAccordions"
+            class="text-xs text-blue-600 hover:text-blue-800 font-bold underline underline-offset-2 flex items-center space-x-1"
+          >
+            <span>{{ allAccordionsOpen ? '📁 Tutup Semua Tahap' : '📂 Buka Semua Tahap' }}</span>
+          </button>
         </div>
       </div>
 
-      <!-- ======================================================== -->
-      <!-- STEP 1: Upfront DMN Rule Transparency & Smart Engine Profile -->
-      <!-- ======================================================== -->
-      <div v-if="permitStore.activeWizard.step === 1" class="space-y-6">
+      <!-- Accordion Form Container (Steps 1 to 5) -->
+      <div v-if="permitStore.activeWizard.step !== 6" class="space-y-4">
+        <!-- ======================================================== -->
+        <!-- ACCORDION ITEM 1: Profil Usaha, Parameter KBLI & Aturan DMN -->
+        <!-- ======================================================== -->
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs transition bg-white">
+          <button
+            type="button"
+            @click="toggleAccordion(1)"
+            class="w-full px-5 py-4 flex items-center justify-between text-left transition select-none bg-slate-50 hover:bg-slate-100/80"
+          >
+            <div class="flex items-center space-x-3.5">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                :class="[
+                  permitStore.activeWizard.step > 1 ? 'bg-emerald-600 text-white' :
+                  openAccordions[1] ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-700'
+                ]"
+              >
+                {{ permitStore.activeWizard.step > 1 ? '✓' : '1' }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-sm text-gray-900">Tahap 1: Profil Usaha, Parameter KBLI & Aturan DMN</h3>
+                  <span
+                    v-if="permitStore.activeWizard.step > 1"
+                    class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Selesai
+                  </span>
+                  <span
+                    v-else-if="openAccordions[1]"
+                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Tinjauan regulasi PP 5/2021 & PP 28/2025, formulir parameter dinamis, dan penentuan kewenangan.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 text-gray-400">
+              <span class="text-xs font-semibold hidden sm:inline">{{ openAccordions[1] ? 'Tutup' : 'Buka' }}</span>
+              <svg
+                class="w-4 h-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': openAccordions[1] }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div v-show="openAccordions[1]" class="p-5 border-t border-gray-200 space-y-6 bg-white">
         <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-5 shadow-xs space-y-4">
           <div class="flex items-start justify-between">
             <div>
@@ -344,21 +413,82 @@
           </div>
         </div>
 
-        <div class="flex justify-end pt-4 border-t">
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
           <button
-            @click="goToNextStep(2)"
-            :disabled="!investmentValidation.isValid"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition"
+            type="button"
+            @click="handleSavePhase(1)"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center space-x-1.5"
           >
-            Lanjut ke Persyaratan Dasar 1: KKPR (Tata Ruang) →
+            <span>💾</span>
+            <span>Simpan</span>
+          </button>
+          <button
+            type="button"
+            @click="handleLanjut(1, 2)"
+            :disabled="!investmentValidation.isValid"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
+          >
+            <span>Lanjut</span>
+            <span>→</span>
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- ======================================================== -->
-      <!-- STEP 2: Persyaratan Dasar 1 — KKPR (Tata Ruang & Lokasi) -->
-      <!-- ======================================================== -->
-      <div v-else-if="permitStore.activeWizard.step === 2" class="space-y-6">
+        <!-- ======================================================== -->
+        <!-- ACCORDION ITEM 2: Persyaratan Dasar 1 — KKPR (Tata Ruang & Lokasi) -->
+        <!-- ======================================================== -->
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs transition bg-white">
+          <button
+            type="button"
+            @click="toggleAccordion(2)"
+            class="w-full px-5 py-4 flex items-center justify-between text-left transition select-none bg-slate-50 hover:bg-slate-100/80"
+          >
+            <div class="flex items-center space-x-3.5">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                :class="[
+                  permitStore.activeWizard.step > 2 ? 'bg-emerald-600 text-white' :
+                  openAccordions[2] ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-700'
+                ]"
+              >
+                {{ permitStore.activeWizard.step > 2 ? '✓' : '2' }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-sm text-gray-900">Tahap 2: Persyaratan Dasar 1 — Kesesuaian Tata Ruang (KKPR) & Studio Spasial</h3>
+                  <span
+                    v-if="permitStore.activeWizard.step > 2"
+                    class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Selesai
+                  </span>
+                  <span
+                    v-else-if="openAccordions[2]"
+                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Validasi lokasi tapak terhadap RDTR/RTRW, studio poligon GIS, dan integrasi aset perpustakaan lahan VFC.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 text-gray-400">
+              <span class="text-xs font-semibold hidden sm:inline">{{ openAccordions[2] ? 'Tutup' : 'Buka' }}</span>
+              <svg
+                class="w-4 h-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': openAccordions[2] }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div v-show="openAccordions[2]" class="p-5 border-t border-gray-200 space-y-6 bg-white">
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
           <div class="flex items-center space-x-2">
             <span class="text-sm font-bold bg-blue-600 text-white px-2 py-0.5 rounded">PD-1</span>
@@ -659,26 +789,81 @@
           </div>
         </div>
 
-        <div class="flex justify-between pt-4 border-t">
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
           <button
-            @click="permitStore.setWizardStep(1)"
-            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            type="button"
+            @click="handleSavePhase(2)"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center space-x-1.5"
           >
-            ← Kembali ke Profil
+            <span>💾</span>
+            <span>Simpan</span>
           </button>
           <button
-            @click="goToNextStep(3)"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+            type="button"
+            @click="handleLanjut(2, 3)"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
           >
-            Lanjut ke Persyaratan Dasar 2: Persetujuan Lingkungan →
+            <span>Lanjut</span>
+            <span>→</span>
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- ======================================================== -->
-      <!-- STEP 3: Persyaratan Dasar 2 — Persetujuan Lingkungan (PL)-->
-      <!-- ======================================================== -->
-      <div v-else-if="permitStore.activeWizard.step === 3" class="space-y-6">
+        <!-- ======================================================== -->
+        <!-- ACCORDION ITEM 3: Persyaratan Dasar 2 — Persetujuan Lingkungan (PL) -->
+        <!-- ======================================================== -->
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs transition bg-white">
+          <button
+            type="button"
+            @click="toggleAccordion(3)"
+            class="w-full px-5 py-4 flex items-center justify-between text-left transition select-none bg-slate-50 hover:bg-slate-100/80"
+          >
+            <div class="flex items-center space-x-3.5">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                :class="[
+                  permitStore.activeWizard.step > 3 ? 'bg-emerald-600 text-white' :
+                  openAccordions[3] ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-700'
+                ]"
+              >
+                {{ permitStore.activeWizard.step > 3 ? '✓' : '3' }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-sm text-gray-900">Tahap 3: Persyaratan Dasar 2 — Persetujuan Lingkungan (PL)</h3>
+                  <span
+                    v-if="permitStore.activeWizard.step > 3"
+                    class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Selesai
+                  </span>
+                  <span
+                    v-else-if="openAccordions[3]"
+                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Penetapan instrumen lingkungan hidup (SPPL, UKL-UPL, AMDAL) & integrasi AMDALNET KLHK.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 text-gray-400">
+              <span class="text-xs font-semibold hidden sm:inline">{{ openAccordions[3] ? 'Tutup' : 'Buka' }}</span>
+              <svg
+                class="w-4 h-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': openAccordions[3] }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div v-show="openAccordions[3]" class="p-5 border-t border-gray-200 space-y-6 bg-white">
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
           <div class="flex items-center space-x-2">
             <span class="text-sm font-bold bg-emerald-600 text-white px-2 py-0.5 rounded">PD-2</span>
@@ -822,26 +1007,81 @@
           </div>
         </div>
 
-        <div class="flex justify-between pt-4 border-t">
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
           <button
-            @click="permitStore.setWizardStep(2)"
-            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            type="button"
+            @click="handleSavePhase(3)"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center space-x-1.5"
           >
-            ← Kembali ke KKPR
+            <span>💾</span>
+            <span>Simpan</span>
           </button>
           <button
-            @click="goToNextStep(4)"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+            type="button"
+            @click="handleLanjut(3, 4)"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
           >
-            Lanjut ke Persyaratan Dasar 3: Bangunan Gedung (PBG & SLF) →
+            <span>Lanjut</span>
+            <span>→</span>
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- ======================================================== -->
-      <!-- STEP 4: Persyaratan Dasar 3 — Bangunan Gedung (PBG & SLF)-->
-      <!-- ======================================================== -->
-      <div v-else-if="permitStore.activeWizard.step === 4" class="space-y-6">
+        <!-- ======================================================== -->
+        <!-- ACCORDION ITEM 4: Persyaratan Dasar 3 — Bangunan Gedung (PBG & SLF) -->
+        <!-- ======================================================== -->
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs transition bg-white">
+          <button
+            type="button"
+            @click="toggleAccordion(4)"
+            class="w-full px-5 py-4 flex items-center justify-between text-left transition select-none bg-slate-50 hover:bg-slate-100/80"
+          >
+            <div class="flex items-center space-x-3.5">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                :class="[
+                  permitStore.activeWizard.step > 4 ? 'bg-emerald-600 text-white' :
+                  openAccordions[4] ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-700'
+                ]"
+              >
+                {{ permitStore.activeWizard.step > 4 ? '✓' : '4' }}
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-sm text-gray-900">Tahap 4: Persyaratan Dasar 3 — Bangunan Gedung (PBG & SLF)</h3>
+                  <span
+                    v-if="permitStore.activeWizard.step > 4"
+                    class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Selesai
+                  </span>
+                  <span
+                    v-else-if="openAccordions[4]"
+                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Penilaian teknis arsitektur dan keselamatan bangunan gedung. Diintegrasikan dengan sistem SIMBG Kementerian PUPR.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 text-gray-400">
+              <span class="text-xs font-semibold hidden sm:inline">{{ openAccordions[4] ? 'Tutup' : 'Buka' }}</span>
+              <svg
+                class="w-4 h-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': openAccordions[4] }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div v-show="openAccordions[4]" class="p-5 border-t border-gray-200 space-y-6 bg-white">
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
           <div class="flex items-center space-x-2">
             <span class="text-sm font-bold bg-indigo-600 text-white px-2 py-0.5 rounded">PD-3</span>
@@ -937,26 +1177,74 @@
           </div>
         </div>
 
-        <div class="flex justify-between pt-4 border-t">
+        <div class="flex items-center justify-between pt-4 border-t">
           <button
-            @click="permitStore.setWizardStep(3)"
-            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            type="button"
+            @click="handleSavePhase(4)"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center space-x-1.5"
           >
-            ← Kembali ke Lingkungan
+            <span>💾</span>
+            <span>Simpan</span>
           </button>
           <button
-            @click="goToNextStep(5)"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+            type="button"
+            @click="handleLanjut(4, 5)"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
           >
-            Lanjut ke Syarat Khusus KBLI & Dokumen VFC →
+            <span>Lanjut</span>
+            <span>→</span>
           </button>
         </div>
       </div>
+    </div>
 
-      <!-- ======================================================== -->
-      <!-- STEP 5: Syarat Khusus KBLI & Verifikasi Dokumen VFC -->
-      <!-- ======================================================== -->
-      <div v-else-if="permitStore.activeWizard.step === 5" class="space-y-6">
+        <!-- ======================================================== -->
+        <!-- ACCORDION ITEM 5: Syarat Khusus KBLI & Verifikasi Dokumen VFC -->
+        <!-- ======================================================== -->
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs transition bg-white">
+          <button
+            type="button"
+            @click="toggleAccordion(5)"
+            class="w-full px-5 py-4 flex items-center justify-between text-left transition select-none bg-slate-50 hover:bg-slate-100/80"
+          >
+            <div class="flex items-center space-x-3.5">
+              <div
+                class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 transition"
+                :class="[
+                  openAccordions[5] ? 'bg-blue-600 text-white shadow-xs' : 'bg-gray-200 text-gray-700'
+                ]"
+              >
+                5
+              </div>
+              <div>
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-sm text-gray-900">Tahap 5: Persyaratan Khusus KBLI & Lampiran Dokumen Filing Cabinet</h3>
+                  <span
+                    v-if="openAccordions[5]"
+                    class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  >
+                    Aktif
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Lampirkan dokumen dari Virtual Filing Cabinet (VFC Zone 1). Siap disegel untuk snapshot permohonan.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 text-gray-400">
+              <span class="text-xs font-semibold hidden sm:inline">{{ openAccordions[5] ? 'Tutup' : 'Buka' }}</span>
+              <svg
+                class="w-4 h-4 transform transition-transform duration-200"
+                :class="{ 'rotate-180': openAccordions[5] }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </div>
+          </button>
+          <div v-show="openAccordions[5]" class="p-5 border-t border-gray-200 space-y-6 bg-white">
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
           <div class="flex items-center space-x-2">
             <span class="text-sm font-bold bg-blue-600 text-white px-2 py-0.5 rounded">VFC</span>
@@ -1031,26 +1319,32 @@
           </div>
         </div>
 
-        <div class="flex justify-between pt-4 border-t">
+        <div class="flex items-center justify-between pt-4 border-t">
           <button
-            @click="permitStore.setWizardStep(4)"
-            class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            type="button"
+            @click="handleSavePhase(5)"
+            class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition flex items-center space-x-1.5"
           >
-            ← Kembali ke PBG/SLF
+            <span>💾</span>
+            <span>Simpan</span>
           </button>
           <button
+            type="button"
             @click="showPreCommitModal = true"
-            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+            class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-2"
           >
-            Tinjau Komitmen & Segel SHA-256 →
+            <span>🔒</span>
+            <span>Tinjau Komitmen & Segel SHA-256 →</span>
           </button>
         </div>
       </div>
+    </div>
+  </div>
 
       <!-- ======================================================== -->
       <!-- STEP 6: Success & Transmitted -->
       <!-- ======================================================== -->
-      <div v-else-if="permitStore.activeWizard.step === 6" class="text-center py-12 space-y-4">
+      <div v-if="permitStore.activeWizard.step === 6" class="text-center py-12 space-y-4">
         <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -1230,7 +1524,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 import { usePermitStore } from '../stores/permitStore';
 import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore } from '../stores/companyStore';
@@ -1247,6 +1541,58 @@ const spatialStore = useSpatialStore();
 
 const showPreCommitModal = ref(false);
 const showVfcParcelSelectorModal = ref(false);
+
+// Accordion expansion state for Steps 1 through 5
+const openAccordions = reactive<Record<number, boolean>>({
+  1: true,
+  2: permitStore.activeWizard.step === 2,
+  3: permitStore.activeWizard.step === 3,
+  4: permitStore.activeWizard.step === 4,
+  5: permitStore.activeWizard.step === 5
+});
+
+watch(
+  () => permitStore.activeWizard.step,
+  (newStep) => {
+    if (newStep >= 1 && newStep <= 5) {
+      openAccordions[newStep] = true;
+    }
+  }
+);
+
+function toggleAccordion(stepNumber: number) {
+  openAccordions[stepNumber] = !openAccordions[stepNumber];
+  if (openAccordions[stepNumber]) {
+    permitStore.setWizardStep(stepNumber);
+  }
+}
+
+const allAccordionsOpen = computed(() => {
+  return [1, 2, 3, 4, 5].every((s) => openAccordions[s]);
+});
+
+function toggleAllAccordions() {
+  const target = !allAccordionsOpen.value;
+  for (let s = 1; s <= 5; s++) {
+    openAccordions[s] = target;
+  }
+}
+
+const saveToastMessage = ref<string | null>(null);
+
+async function handleSavePhase(phaseNumber: number) {
+  await permitStore.persistDraft();
+  saveToastMessage.value = `Draf Tahap ${phaseNumber} berhasil disimpan ke IndexedDB.`;
+  setTimeout(() => {
+    saveToastMessage.value = null;
+  }, 3000);
+}
+
+function handleLanjut(fromStep: number, toStep: number) {
+  openAccordions[fromStep] = false;
+  openAccordions[toStep] = true;
+  permitStore.setWizardStep(toStep);
+}
 
 const wizardSteps = [
   { step: 1, shortLabel: 'Profil & Rules' },
@@ -1468,6 +1814,7 @@ const attachedEnvDoc = computed(() => {
 
 function goToNextStep(step: number) {
   permitStore.setWizardStep(step);
+  openAccordions[step] = true;
 }
 
 function onSelectExistingDoc(e: Event, category: string) {

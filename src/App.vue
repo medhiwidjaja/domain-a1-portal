@@ -30,7 +30,7 @@
             </div>
             <div class="hidden md:block text-left text-xs">
               <span class="font-bold block text-slate-200">Budi Santoso</span>
-              <span class="text-slate-400 text-[10px]">NIK: 3175012345678000 (Dukcapil Verified)</span>
+              <span class="text-slate-400 text-[10px]">Pelaku Usaha (Dukcapil Verified)</span>
             </div>
           </div>
 
@@ -197,12 +197,12 @@ const companyStore = useCompanyStore();
 const vfcStore = useVfcStore();
 const permitStore = usePermitStore();
 
-const activeTab = ref<'kbli' | 'dashboard' | 'wizard'>('kbli');
+const activeTab = ref<'dashboard' | 'kbli' | 'wizard'>('dashboard');
 const showMobileVfc = ref(false);
 
 const tabs = computed(() => [
+  { id: 'dashboard' as const, label: 'Home', icon: '🏠', badge: activeApplications.value.length },
   { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
-  { id: 'dashboard' as const, label: 'Dashboard & Tracker SLA', icon: '📊', badge: activeApplications.value.length },
   { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' }
 ]);
 
