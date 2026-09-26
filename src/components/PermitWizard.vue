@@ -1177,7 +1177,7 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between pt-4 border-t">
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
           <button
             type="button"
             @click="handleSavePhase(4)"
@@ -1319,7 +1319,7 @@
           </div>
         </div>
 
-        <div class="flex items-center justify-between pt-4 border-t">
+        <div class="flex items-center justify-end space-x-3 pt-4 border-t">
           <button
             type="button"
             @click="handleSavePhase(5)"
