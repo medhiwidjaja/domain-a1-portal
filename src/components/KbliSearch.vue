@@ -168,7 +168,8 @@
     </div>
 
     <!-- Detail DMN Modal with Scope Selector -->
-    <div v-if="detailModalKbli" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+    <Teleport to="body">
+      <div v-if="detailModalKbli" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6 shadow-2xl">
         <div class="flex justify-between items-center pb-4 border-b">
           <div>
@@ -317,6 +318,7 @@
         </div>
       </div>
     </div>
+    </Teleport>
   </div>
 </template>
 

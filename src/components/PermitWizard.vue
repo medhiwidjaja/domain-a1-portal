@@ -234,6 +234,114 @@
               />
             </div>
           </div>
+
+          <!-- STAGE 1 DMN: DYNAMIC SCHEMA-DRIVEN PARAMETERS -->
+          <div v-if="stage1Requirements && stage1Requirements.parameters_schema.fields.length > 0" class="border border-blue-200 rounded-xl p-4 bg-gradient-to-br from-blue-50/70 to-indigo-50/50 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="p-1.5 bg-blue-600 text-white rounded-lg text-xs">⚙️</span>
+                <div>
+                  <h4 class="font-bold text-xs text-gray-900">{{ stage1Requirements.parameters_schema.title }}</h4>
+                  <p class="text-[11px] text-gray-500">{{ stage1Requirements.parameters_schema.description }}</p>
+                </div>
+              </div>
+              <span class="text-[10px] font-mono bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded">
+                DMN 1.3 Stage 1
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+              <div
+                v-for="field in stage1Requirements.parameters_schema.fields"
+                :key="field.key"
+                class="bg-white p-3 rounded-lg border border-gray-200 shadow-2xs space-y-1.5 text-xs"
+              >
+                <label class="block font-bold text-gray-800 text-[11px]">
+                  {{ field.label }}
+                  <span v-if="field.unit" class="text-blue-600 font-mono text-[10px]">({{ field.unit }})</span>
+                </label>
+
+                <!-- Number field -->
+                <div v-if="field.type === 'number'" class="relative">
+                  <input
+                    type="number"
+                    :min="field.min"
+                    :max="field.max"
+                    :step="field.step || 1"
+                    :value="permitStore.activeWizard.formData.dynamic_params[field.key]"
+                    @input="onDynamicParamChange(field.key, Number(($event.target as HTMLInputElement).value))"
+                    class="w-full p-2 border border-gray-300 rounded-lg font-mono font-bold text-gray-800"
+                  />
+                </div>
+
+                <!-- Enum field -->
+                <div v-else-if="field.type === 'enum'">
+                  <select
+                    :value="permitStore.activeWizard.formData.dynamic_params[field.key]"
+                    @change="onDynamicParamChange(field.key, ($event.target as HTMLSelectElement).value)"
+                    class="w-full p-2 border border-gray-300 rounded-lg bg-gray-50 font-semibold text-gray-800"
+                  >
+                    <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Boolean field -->
+                <div v-else-if="field.type === 'boolean'" class="flex items-center space-x-3 pt-1">
+                  <label class="inline-flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      :checked="Boolean(permitStore.activeWizard.formData.dynamic_params[field.key])"
+                      @change="onDynamicParamChange(field.key, ($event.target as HTMLInputElement).checked)"
+                      class="w-4 h-4 text-blue-600 rounded"
+                    />
+                    <span class="text-xs font-semibold text-gray-700">Ya, Sesuai Kriteria</span>
+                  </label>
+                </div>
+
+                <p v-if="field.help_text" class="text-[10px] text-gray-400 leading-tight">
+                  {{ field.help_text }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- STAGE 2 DMN: DETERMINISTIC AUTHORITY ROUTING TRANSPARENCY BANNER -->
+          <div class="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-blue-950 text-white rounded-xl shadow-md space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2">
+              <div class="flex items-center space-x-2">
+                <span class="p-1 bg-blue-500/20 text-blue-400 rounded text-xs font-mono font-bold">DMN B1</span>
+                <span class="text-xs font-bold text-slate-200">Hasil Evaluasi Deterministik Kewenangan (Stage 2 DMN)</span>
+              </div>
+              <div class="flex items-center space-x-2 font-mono text-[10px]">
+                <span class="bg-blue-600 text-white px-2 py-0.5 rounded font-bold">
+                  Kode: {{ permitStore.activeWizard.formData.assigned_authority_code }} ({{ permitStore.activeWizard.formData.authority_tier }})
+                </span>
+                <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded">
+                  SLA: {{ permitStore.activeWizard.formData.statutory_sla_days }} Hari
+                </span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+              <div class="space-y-1">
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Badan / Instansi Verifikator Terpilih:</span>
+                <div class="font-bold text-sm text-blue-300 flex items-center space-x-1.5">
+                  <span>🏛️</span>
+                  <span>{{ permitStore.activeWizard.formData.designated_verifier_agency || 'DPMPTSP Terkait' }}</span>
+                </div>
+              </div>
+
+              <div class="space-y-1">
+                <span class="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Rule Matched & Dasar Regulasi:</span>
+                <p class="text-[11px] text-slate-300 leading-relaxed font-mono">
+                  <span class="text-amber-400 font-bold">[{{ permitStore.activeWizard.formData.matched_rule_id }}]</span>
+                  {{ permitStore.activeWizard.formData.matched_rule_desc }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end pt-4 border-t">
@@ -260,6 +368,45 @@
             Validasi lokasi tapak usaha terhadap Rencana Tata Ruang (RTRW/RDTR). Berdasarkan skala usaha dan kawasan, sistem menentukan jalur otomatis atau verifikasi PKKPR.
           </p>
         </div>
+
+        <!-- Site Asset Binder & Vector GIS Studio Toolbar -->
+        <div class="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-white border border-gray-200 rounded-xl shadow-2xs">
+          <div class="flex items-center space-x-2.5">
+            <span class="p-2 bg-blue-100 text-blue-800 rounded-lg text-base">🗺️</span>
+            <div>
+              <div class="flex items-center space-x-2">
+                <span class="text-xs font-bold text-gray-900">
+                  {{ permitStore.activeWizard.formData.spatial_parcel_binding_id ? 'Aset Lokasi Terikat dari VFC:' : 'Tapak Lokasi Proyek:' }}
+                </span>
+                <span class="text-blue-700 font-bold text-xs">{{ permitStore.activeWizard.formData.alamat_usaha }}</span>
+              </div>
+              <p class="text-[10px] text-gray-500 mt-0.5">
+                Luas Lahan: {{ permitStore.activeWizard.formData.luas_tanah.toLocaleString('id-ID') }} m² • Status Tata Ruang: <strong>{{ permitStore.activeWizard.formData.rdtr_status }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            @click="showVfcParcelSelectorModal = true"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
+          >
+            <span>📂</span>
+            <span>Pilih Aset dari VFC Lokasi</span>
+          </button>
+        </div>
+
+        <!-- Embedded Interactive Vector GIS Map Canvas Studio -->
+        <InteractiveGisStudio
+          :initialCoordinates="permitStore.activeWizard.formData.polygon_coordinates"
+          :siteName="permitStore.activeWizard.formData.alamat_usaha"
+          :address="permitStore.activeWizard.formData.alamat_usaha"
+          :isCrossKab="permitStore.activeWizard.formData.is_cross_kab"
+          :isCrossProv="permitStore.activeWizard.formData.is_cross_prov"
+          :zoneCode="permitStore.activeWizard.formData.zone_code"
+          :zoneName="permitStore.activeWizard.formData.zone_name"
+          @save-parcel="onStudioSaveParcel"
+        />
 
         <!-- Matra & Tipe Lokasi -->
         <div class="space-y-4">
@@ -932,95 +1079,153 @@
     </div>
 
     <!-- Pre-Commit Modal -->
-    <div v-if="showPreCommitModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
-        <div class="flex items-center space-x-3 text-amber-600 pb-4 border-b border-gray-100">
-          <div class="p-3 bg-amber-100 rounded-xl">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-gray-900">Penyegelan Snapshot Persyaratan Dasar (Pre-Commit)</h3>
-            <p class="text-xs text-gray-500">Pernyataan Hukum & Transmisi Data ke Domain B2</p>
-          </div>
-        </div>
-
-        <div class="mt-4 space-y-4 text-xs text-gray-700">
-          <p class="font-medium leading-relaxed">
-            Anda akan melakukan komitmen akhir pengajuan permohonan perizinan berusaha. Sistem Domain A1 akan melakukan tindakan:
-          </p>
-          <!-- Compliance Recap -->
-          <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 text-[11px]">
-            <div class="flex justify-between">
-              <span class="text-gray-500">KBLI & Ruang Lingkup:</span>
-              <span class="font-bold text-gray-900">{{ permitStore.activeWizard.kbli?.kbli_code }} (Lingkup {{ activeScope?.sequence }})</span>
+    <Teleport to="body">
+      <div v-if="showPreCommitModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-gray-100 max-h-[90vh] overflow-y-auto">
+          <div class="flex items-center space-x-3 text-amber-600 pb-4 border-b border-gray-100">
+            <div class="p-3 bg-amber-100 rounded-xl">
+              <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
             </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Status KKPR:</span>
-              <span class="font-bold text-emerald-700">{{ isKkprAutomatic ? 'Pernyataan Mandiri (Otomatis)' : 'Verifikasi PKKPR' }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Persetujuan Lingkungan:</span>
-              <span class="font-bold text-emerald-700">{{ requiredEnvironmentalDocType.toUpperCase() }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">PBG & SLF:</span>
-              <span class="font-bold text-blue-700">
-                {{ permitStore.activeWizard.formData.memerlukan_bangunan === 'Y' ? 'Pengajuan SIMBG PUPR' : 'Bypass (Terpenuhi Otomatis)' }}
-              </span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Dokumen VFC Terlampir:</span>
-              <span class="font-mono font-bold text-purple-700">{{ permitStore.activeWizard.selectedVfcDocIds.length }} File</span>
+            <div>
+              <h3 class="text-base font-bold text-gray-900">Penyegelan Snapshot Persyaratan Dasar (Pre-Commit)</h3>
+              <p class="text-xs text-gray-500">Pernyataan Hukum & Transmisi Data ke Domain B2</p>
             </div>
           </div>
 
-          <ul class="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <li class="flex items-start space-x-2">
-              <span class="text-blue-600 font-bold">1.</span>
-              <span>Membuat <strong>Submission Snapshot</strong> permanen yang menyegel formulir dan salinan dokumen VFC.</span>
-            </li>
-            <li class="flex items-start space-x-2">
-              <span class="text-blue-600 font-bold">2.</span>
-              <span>Menghasilkan hash deterministik SHA-256 (<code>payload_digest</code>) sebagai bukti integritas data.</span>
-            </li>
-            <li class="flex items-start space-x-2">
-              <span class="text-blue-600 font-bold">3.</span>
-              <span>Meneruskan paket permohonan ke <strong>Domain B2 (Workflow Orchestrator)</strong> untuk verifikasi teknis K/L/D.</span>
-            </li>
-          </ul>
+          <div class="mt-4 space-y-4 text-xs text-gray-700">
+            <p class="font-medium leading-relaxed">
+              Anda akan melakukan komitmen akhir pengajuan permohonan perizinan berusaha. Sistem Domain A1 akan melakukan tindakan:
+            </p>
+            <!-- Compliance Recap -->
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-2 text-[11px]">
+              <div class="flex justify-between">
+                <span class="text-gray-500">KBLI & Ruang Lingkup:</span>
+                <span class="font-bold text-gray-900">{{ permitStore.activeWizard.kbli?.kbli_code }} (Lingkup {{ activeScope?.sequence }})</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Status KKPR:</span>
+                <span class="font-bold text-emerald-700">{{ isKkprAutomatic ? 'Pernyataan Mandiri (Otomatis)' : 'Verifikasi PKKPR' }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Persetujuan Lingkungan:</span>
+                <span class="font-bold text-emerald-700">{{ requiredEnvironmentalDocType.toUpperCase() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">PBG & SLF:</span>
+                <span class="font-bold text-blue-700">
+                  {{ permitStore.activeWizard.formData.memerlukan_bangunan === 'Y' ? 'Pengajuan SIMBG PUPR' : 'Bypass (Terpenuhi Otomatis)' }}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500">Dokumen VFC Terlampir:</span>
+                <span class="font-mono font-bold text-purple-700">{{ permitStore.activeWizard.selectedVfcDocIds.length }} File</span>
+              </div>
+            </div>
 
-          <!-- Deterministic SHA-256 Digest Preview -->
-          <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px]">
-            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider mb-1">Simulasi SHA-256 Payload Digest:</span>
-            <span class="text-emerald-400 break-all">{{ mockDigest }}</span>
+            <ul class="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <li class="flex items-start space-x-2">
+                <span class="text-blue-600 font-bold">1.</span>
+                <span>Membuat <strong>Submission Snapshot</strong> permanen yang menyegel formulir dan salinan dokumen VFC.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-blue-600 font-bold">2.</span>
+                <span>Menghasilkan hash deterministik SHA-256 (<code>payload_digest</code>) sebagai bukti integritas data.</span>
+              </li>
+              <li class="flex items-start space-x-2">
+                <span class="text-blue-600 font-bold">3.</span>
+                <span>Meneruskan paket permohonan ke <strong>Domain B2 (Workflow Orchestrator)</strong> untuk verifikasi teknis K/L/D.</span>
+              </li>
+            </ul>
+
+            <!-- Deterministic SHA-256 Digest Preview -->
+            <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-[11px]">
+              <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider mb-1">Simulasi SHA-256 Payload Digest:</span>
+              <span class="text-emerald-400 break-all">{{ mockDigest }}</span>
+            </div>
+
+            <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] leading-relaxed">
+              ⚠️ <strong>Pernyataan Kepatuhan:</strong> Seluruh data formulir persyaratan dasar yang disampaikan adalah sah dan dapat dipertanggungjawabkan secara hukum. Draf tidak dapat diubah setelah transmisi.
+            </div>
           </div>
 
-          <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] leading-relaxed">
-            ⚠️ <strong>Pernyataan Kepatuhan:</strong> Seluruh data formulir persyaratan dasar yang disampaikan adalah sah dan dapat dipertanggungjawabkan secara hukum. Draf tidak dapat diubah setelah transmisi.
+          <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
+            <button
+              @click="showPreCommitModal = false"
+              class="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition"
+            >
+              Batal
+            </button>
+            <button
+              @click="handleConfirmSubmit"
+              class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg transition flex items-center space-x-2"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Segel & Kirim Permohonan</span>
+            </button>
           </div>
-        </div>
-
-        <div class="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-100">
-          <button
-            @click="showPreCommitModal = false"
-            class="px-4 py-2.5 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition"
-          >
-            Batal
-          </button>
-          <button
-            @click="handleConfirmSubmit"
-            class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-lg transition flex items-center space-x-2"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
-            <span>Segel & Kirim Permohonan</span>
-          </button>
         </div>
       </div>
-    </div>
+    </Teleport>
+
+    <!-- VFC Spatial Parcel Selector Modal -->
+    <Teleport to="body">
+      <div v-if="showVfcParcelSelectorModal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+          <div class="flex justify-between items-center pb-3 border-b">
+            <div>
+              <h3 class="text-base font-bold text-gray-900">Pilih Aset Spasial dari VFC Lokasi</h3>
+              <p class="text-xs text-gray-500">Pilih plot lahan yang sudah tersimpan di vault Anda untuk 1-click binding.</p>
+            </div>
+            <button @click="showVfcParcelSelectorModal = false" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+
+          <div class="overflow-y-auto space-y-2 flex-1 pr-1 text-xs">
+            <div
+              v-if="spatialStore.parcelsByCompany(companyStore.activeCompanyId).length === 0"
+              class="p-6 text-center text-gray-400 italic"
+            >
+              Belum ada aset spasial di VFC Lokasi. Silakan gambar di studio atau unggah Shapefile.
+            </div>
+
+            <div
+              v-for="parcel in spatialStore.parcelsByCompany(companyStore.activeCompanyId)"
+              :key="parcel.parcel_id"
+              @click="selectParcelFromVfc(parcel)"
+              class="p-3 border border-gray-200 hover:border-blue-500 hover:bg-blue-50/50 rounded-xl cursor-pointer transition space-y-1.5"
+            >
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-gray-900 text-sm">{{ parcel.site_name }}</span>
+                <span class="text-[10px] font-mono bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded">
+                  {{ parcel.rdtr_status }}
+                </span>
+              </div>
+              <p class="text-gray-600 text-xs line-clamp-1">{{ parcel.address }}</p>
+              <div class="flex items-center space-x-3 text-[10px] text-gray-500 font-mono">
+                <span>Luas: {{ parcel.area_sqm.toLocaleString('id-ID') }} m²</span>
+                <span>•</span>
+                <span>Kawasan: {{ parcel.zone_name }}</span>
+                <span>•</span>
+                <span>{{ parcel.is_cross_kab ? '⚠️ Lintas Kab/Kota' : 'Tunggal' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-3 border-t">
+            <button
+              type="button"
+              @click="showVfcParcelSelectorModal = false"
+              class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -1029,14 +1234,19 @@ import { ref, computed } from 'vue';
 import { usePermitStore } from '../stores/permitStore';
 import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore } from '../stores/companyStore';
+import { useSpatialStore, type SpatialParcelAsset } from '../stores/spatialStore';
+import { evaluateStage1KbliRequirements } from '../utils/dmnEngine';
+import InteractiveGisStudio from './InteractiveGisStudio.vue';
 
 defineEmits(['switch-tab']);
 
 const permitStore = usePermitStore();
 const vfcStore = useVfcStore();
 const companyStore = useCompanyStore();
+const spatialStore = useSpatialStore();
 
 const showPreCommitModal = ref(false);
+const showVfcParcelSelectorModal = ref(false);
 
 const wizardSteps = [
   { step: 1, shortLabel: 'Profil & Rules' },
@@ -1075,6 +1285,65 @@ const reqList = computed(() => {
   return scope.licensing_requirements[0].requirements || [];
 });
 
+// Stage 1 DMN Requirements & Typed Dynamic Parameter Schema
+const stage1Requirements = computed(() => {
+  if (!permitStore.activeWizard.kbli) return null;
+  return evaluateStage1KbliRequirements(
+    permitStore.activeWizard.kbli.kbli_code,
+    Number(activeScope.value?.sequence || 1),
+    companyStore.activeCompany.scale || 'Besar'
+  );
+});
+
+// Smart Engine Capital & Scale Classification (Section 4.3 TO-BE Spec)
+const capitalEvaluation = computed(() => {
+  const issuedCapital = companyStore.activeCompany.capital || 0;
+  const projectNetInvest = permitStore.activeWizard.formData.investmentAmount || 0;
+  const evalBase = Math.max(issuedCapital, projectNetInvest);
+  const isPma = permitStore.activeWizard.formData.status_penanaman_modal === '01';
+
+  if (isPma) {
+    const isPmaFloorMet = projectNetInvest > 10000000000;
+    return {
+      scale: 'Besar',
+      scaleCode: '04',
+      isPma: true,
+      isFloorMet: isPmaFloorMet,
+      evalBase,
+      desc: isPmaFloorMet
+        ? 'PMA Terkunci Usaha Besar (Investasi memenuhi floor > IDR 10 Miliar sesuai BKPM 4/2021)'
+        : 'PELANGGARAN PMA FLOOR: Nilai investasi proyek di luar tanah & bangunan harus > Rp 10 Miliar!'
+    };
+  }
+
+  let scale = 'Besar';
+  let scaleCode = '04';
+  let desc = 'Modal Usaha / Investasi > Rp 10 Miliar (PP 7/2021 & PP 28/2025)';
+
+  if (evalBase <= 1000000000) {
+    scale = 'Mikro';
+    scaleCode = '01';
+    desc = 'Modal Usaha s.d Rp 1 Miliar (PP 7/2021)';
+  } else if (evalBase <= 5000000000) {
+    scale = 'Kecil';
+    scaleCode = '02';
+    desc = 'Modal Usaha > Rp 1 Miliar s.d Rp 5 Miliar (PP 7/2021)';
+  } else if (evalBase <= 10000000000) {
+    scale = 'Menengah';
+    scaleCode = '03';
+    desc = 'Modal Usaha > Rp 5 Miliar s.d Rp 10 Miliar (PP 7/2021)';
+  }
+
+  return {
+    scale,
+    scaleCode,
+    isPma: false,
+    isFloorMet: true,
+    evalBase,
+    desc
+  };
+});
+
 // Smart Engine Investment Validation (Rule 1-5 from analisis_persyaratan_dasar.md)
 const investmentValidation = computed(() => {
   const form = permitStore.activeWizard.formData;
@@ -1082,18 +1351,18 @@ const investmentValidation = computed(() => {
   const isUmk = form.flag_umkm === 'Y';
   const amount = form.investmentAmount || 0;
 
-  if (isPma && amount < 10000000000) {
+  if (isPma && amount <= 10000000000) {
     return {
       isValid: false,
-      title: 'Peringatan Batas Investasi PMA (Rule 1)',
-      message: 'Status penanaman modal Anda PMA. Sesuai regulasi, nilai investasi Anda harus di atas Rp 10 Miliar di luar tanah dan bangunan.'
+      title: 'Peringatan Batas Investasi PMA (BKPM 4/2021)',
+      message: 'Status penanaman modal Anda PMA. Sesuai regulasi BKPM 4/2021, nilai investasi Anda harus lebih dari Rp 10 Miliar di luar tanah dan bangunan.'
     };
   }
 
   if (!isPma && isUmk && amount > 5000000000) {
     return {
       isValid: false,
-      title: 'Peringatan Skala Investasi UMK (Rule 4)',
+      title: 'Peringatan Skala Investasi UMK (PP 7/2021)',
       message: 'Jumlah investasi Anda di atas Rp 5 Miliar di luar tanah dan bangunan. Silakan upgrade skala menjadi Non-UMK.'
     };
   }
@@ -1101,7 +1370,7 @@ const investmentValidation = computed(() => {
   if (!isPma && !isUmk && amount <= 5000000000) {
     return {
       isValid: false,
-      title: 'Peringatan Skala Investasi Non-UMK (Rule 5)',
+      title: 'Peringatan Skala Investasi Non-UMK (PP 7/2021)',
       message: 'Jumlah investasi untuk Non-UMK harus di atas Rp 5 Miliar di luar tanah dan bangunan.'
     };
   }
@@ -1109,9 +1378,51 @@ const investmentValidation = computed(() => {
   return {
     isValid: true,
     title: 'Validasi Profil Smart Engine Lolos',
-    message: 'Skala usaha dan rencana investasi Anda telah sesuai dengan ketentuan PP 28/2025.'
+    message: `Skala usaha (${capitalEvaluation.value.scale}) dan rencana investasi telah diverifikasi sesuai PP 7/2021 & PP 28/2025.`
   };
 });
+
+function onDynamicParamChange(key: string, value: any) {
+  permitStore.updateDynamicParam(key, value);
+}
+
+function selectParcelFromVfc(parcel: SpatialParcelAsset) {
+  permitStore.bindSpatialParcel(parcel);
+  showVfcParcelSelectorModal.value = false;
+  alert(`✅ Berhasil mengaitkan aset spasial "${parcel.site_name}" dari VFC Lokasi ke formulir KKPR!`);
+}
+
+function onStudioSaveParcel(parcelData: Partial<SpatialParcelAsset>) {
+  spatialStore.addParcel({
+    company_id: companyStore.activeCompanyId,
+    site_name: parcelData.site_name || 'Plot Proyek KBLI ' + permitStore.activeWizard.kbli?.kbli_code,
+    address: parcelData.address || permitStore.activeWizard.formData.alamat_usaha,
+    region_code: '32.01.01.2001',
+    province: permitStore.activeWizard.formData.provinsi,
+    regency: permitStore.activeWizard.formData.kab_kota,
+    district: permitStore.activeWizard.formData.kecamatan,
+    village: permitStore.activeWizard.formData.kelurahan,
+    postal_code: permitStore.activeWizard.formData.kode_pos,
+    position: permitStore.activeWizard.formData.posisi_lokasi,
+    latitude: parcelData.latitude || permitStore.activeWizard.formData.latitude,
+    longitude: parcelData.longitude || permitStore.activeWizard.formData.longitude,
+    polygon_coordinates: parcelData.polygon_coordinates || permitStore.activeWizard.formData.polygon_coordinates,
+    area_sqm: parcelData.area_sqm || permitStore.activeWizard.formData.luas_tanah,
+    area_ha: parcelData.area_ha || (permitStore.activeWizard.formData.luas_tanah / 10000),
+    is_cross_kab: parcelData.is_cross_kab || false,
+    is_cross_prov: parcelData.is_cross_prov || false,
+    zone_code: parcelData.zone_code || 'STANDARD',
+    zone_name: parcelData.zone_name || 'Kawasan Industri',
+    rdtr_status: parcelData.rdtr_status || 'SESUAI',
+    rdtr_zoning_code: 'KPI',
+    rdtr_sub_zone: parcelData.rdtr_sub_zone || 'Kawasan Peruntukan Industri (KPI)',
+    ownership_doc_type: permitStore.activeWizard.formData.jenis_dokumen_tanah,
+    ownership_doc_number: permitStore.activeWizard.formData.nomor_dokumen_tanah
+  }).then((p) => {
+    permitStore.bindSpatialParcel(p);
+    alert(`✅ Aset Lokasi "${p.site_name}" berhasil disimpan ke VFC dan dikaitkan ke formulir KKPR!`);
+  });
+}
 
 // KKPR Automatic vs Manual check (Section 2 from analisis_persyaratan_dasar.md)
 const isKkprAutomatic = computed(() => {
@@ -1167,13 +1478,13 @@ function onSelectExistingDoc(e: Event, category: string) {
   }
 }
 
-function onInlineUpload(e: Event, category: string, defaultTitle: string) {
+async function onInlineUpload(e: Event, category: string, defaultTitle: string) {
   const target = e.target as HTMLInputElement;
   if (!target.files || target.files.length === 0) return;
   const file = target.files[0];
   const fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
 
-  const newDoc = vfcStore.addDocument({
+  const newDoc = await vfcStore.addDocument({
     companyId: companyStore.activeCompanyId,
     category,
     title: `${defaultTitle} (${permitStore.activeWizard.kbli?.kbli_code || 'VFC'})`,

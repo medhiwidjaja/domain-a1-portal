@@ -1,6 +1,14 @@
 import { defineStore } from 'pinia';
 import { useCompanyStore } from './companyStore';
 import kbliData from '../data/kbli-catalog.json';
+import { idbGetAll, idbPut, getAppState, setAppState, STORES } from '../utils/idbStorage';
+import {
+  evaluateStage1KbliRequirements,
+  evaluateStage2AuthorityRouting,
+  type Stage1RequirementsResult,
+  type AuthorityRoutingResult
+} from '../utils/dmnEngine';
+import type { SpatialParcelAsset } from './spatialStore';
 
 export interface KbliItem {
   kbli_code: string;
@@ -32,6 +40,12 @@ export interface PermitApplication {
   slaDeadlineSeconds?: number;
   payloadDigest?: string;
   attachedVfcDocIds: string[];
+  assigned_authority_code?: string;
+  designated_verifier_agency?: string;
+  matched_rule_id?: string;
+  statutory_sla_days?: number;
+  dynamic_params?: Record<string, any>;
+  spatial_parcel_binding_id?: string | null;
   formData: {
     projectName: string;
     investmentAmount: number;
@@ -55,6 +69,7 @@ export interface PermitApplication {
 
 export const usePermitStore = defineStore('permitStore', {
   state: () => ({
+    isHydrated: false,
     catalog: kbliData as KbliItem[],
     searchQuery: '',
     selectedRiskFilter: 'ALL',
@@ -194,7 +209,28 @@ export const usePermitStore = defineStore('permitStore', {
         jumlahLantai: 2,
         jumlahEstimasiPenghuni: 40,
         nomorImbUntukSlfEksisting: '',
-        disclaimerSimbg: true
+        disclaimerSimbg: true,
+
+        // DMN 1.3 & Automated Spatial Target Architecture
+        dynamic_params: {} as Record<string, any>,
+        assigned_authority_code: '02' as '00' | '01' | '02' | '03' | '04',
+        authority_tier: 'Kab/Kota' as 'Pusat' | 'Provinsi' | 'Kab/Kota' | 'KEK' | 'KPBPB',
+        designated_verifier_agency: 'DPMPTSP Kab. Bogor',
+        matched_rule_id: 'RULE_DEFAULT_DOMESTIC_LOCAL_02',
+        matched_rule_desc: 'Proyek PMDN dalam satu wilayah administratif kabupaten/kota standar -> Kewenangan Bupati/Walikota.',
+        statutory_sla_days: 5,
+        spatial_parcel_binding_id: null as string | null,
+        is_cross_kab: false,
+        is_cross_prov: false,
+        zone_code: 'STANDARD' as 'STANDARD' | '03' | '04',
+        zone_name: 'Kawasan Industri Sentul Sentra',
+        rdtr_status: 'SESUAI' as 'SESUAI' | 'TERBATAS' | 'TANPA_RDTR',
+        polygon_coordinates: [
+          { lat: -6.54125, lng: 106.86432 },
+          { lat: -6.54080, lng: 106.86550 },
+          { lat: -6.54210, lng: 106.86590 },
+          { lat: -6.54250, lng: 106.86480 }
+        ] as Array<{ lat: number; lng: number }>
       },
       selectedVfcDocIds: [] as string[]
     }
@@ -239,6 +275,87 @@ export const usePermitStore = defineStore('permitStore', {
   },
 
   actions: {
+    async init() {
+      if (this.isHydrated) return;
+      try {
+        const storedApps = await idbGetAll<PermitApplication>(STORES.PERMITS);
+        if (storedApps && storedApps.length > 0) {
+          this.applications = storedApps;
+        } else {
+          for (const app of this.applications) {
+            await idbPut(STORES.PERMITS, app);
+          }
+        }
+        const savedDraft = await getAppState<any>('active_wizard_draft');
+        if (savedDraft && savedDraft.kbli) {
+          this.activeWizard = savedDraft;
+        }
+      } catch (err) {
+        console.warn('IDB permit hydration fallback:', err);
+      } finally {
+        this.isHydrated = true;
+      }
+    },
+
+    runStage2Routing() {
+      if (!this.activeWizard.kbli) return;
+      const routingResult = evaluateStage2AuthorityRouting({
+        kbli_code: this.activeWizard.kbli.kbli_code,
+        status_penanaman_modal: this.activeWizard.formData.status_penanaman_modal,
+        is_cross_prov: this.activeWizard.formData.is_cross_prov,
+        is_cross_kab: this.activeWizard.formData.is_cross_kab,
+        zone_code: this.activeWizard.formData.zone_code,
+        zone_name: this.activeWizard.formData.zone_name,
+        dynamic_params: this.activeWizard.formData.dynamic_params
+      });
+
+      this.activeWizard.formData.assigned_authority_code = routingResult.kode_kewenangan;
+      this.activeWizard.formData.authority_tier = routingResult.authority_tier;
+      this.activeWizard.formData.designated_verifier_agency = routingResult.designated_verifier_agency;
+      this.activeWizard.formData.matched_rule_id = routingResult.matched_rule_id;
+      this.activeWizard.formData.matched_rule_desc = routingResult.matched_rule_desc;
+      this.activeWizard.formData.statutory_sla_days = routingResult.statutory_sla_days;
+    },
+
+    bindSpatialParcel(parcel: SpatialParcelAsset) {
+      this.activeWizard.formData.spatial_parcel_binding_id = parcel.parcel_id;
+      this.activeWizard.formData.alamat_usaha = parcel.address;
+      this.activeWizard.formData.latitude = parcel.latitude;
+      this.activeWizard.formData.longitude = parcel.longitude;
+      this.activeWizard.formData.luas_tanah = parcel.area_sqm;
+      this.activeWizard.formData.satuan_luas_tanah = 'm2';
+      this.activeWizard.formData.posisi_lokasi = parcel.position;
+      this.activeWizard.formData.is_cross_kab = parcel.is_cross_kab;
+      this.activeWizard.formData.is_cross_prov = parcel.is_cross_prov;
+      this.activeWizard.formData.zone_code = parcel.zone_code;
+      this.activeWizard.formData.zone_name = parcel.zone_name;
+      this.activeWizard.formData.flag_kawasan = parcel.zone_code !== 'STANDARD' || parcel.zone_name.includes('Industri') ? 'Y' : 'N';
+      this.activeWizard.formData.tipe_kawasan = parcel.zone_code === '03' ? '02' : '01';
+      this.activeWizard.formData.nama_kawasan = parcel.zone_name;
+      this.activeWizard.formData.rdtr_status = parcel.rdtr_status;
+      this.activeWizard.formData.flag_rdtr = parcel.rdtr_status === 'SESUAI' ? 'Y' : 'N';
+      this.activeWizard.formData.jenis_dokumen_tanah = parcel.ownership_doc_type;
+      this.activeWizard.formData.nomor_dokumen_tanah = parcel.ownership_doc_number;
+      this.activeWizard.formData.polygon_coordinates = [...parcel.polygon_coordinates];
+
+      this.runStage2Routing();
+      this.persistDraft();
+    },
+
+    updateDynamicParam(key: string, value: any) {
+      this.activeWizard.formData.dynamic_params[key] = value;
+      this.runStage2Routing();
+      this.persistDraft();
+    },
+
+    async persistDraft() {
+      try {
+        await setAppState('active_wizard_draft', this.activeWizard);
+      } catch (e) {
+        // silent
+      }
+    },
+
     startWizardForKbli(kbli: KbliItem, scope?: any) {
       const companyStore = useCompanyStore();
       const chosenScope = scope || (kbli.scopes && kbli.scopes[0]) || null;
@@ -251,10 +368,22 @@ export const usePermitStore = defineStore('permitStore', {
       const isHigh = riskCode === 'T' || riskCode === 'TI';
       const isMarine = kbli.kbli_code.startsWith('03');
 
+      // Run Stage 1 DMN to obtain parameter schema & defaults
+      const stage1 = evaluateStage1KbliRequirements(
+        kbli.kbli_code,
+        Number(chosenScope?.sequence || 1),
+        companyStore.activeCompany.scale || 'Besar'
+      );
+
+      const dynamicDefaults: Record<string, any> = {};
+      for (const field of stage1.parameters_schema.fields) {
+        dynamicDefaults[field.key] = field.default !== undefined ? field.default : '';
+      }
+
       this.activeWizard.formData = {
         projectName: `Operasi Usaha ${kbli.title}${chosenScope ? ' (Lingkup ' + chosenScope.sequence + ')' : ''}`,
         investmentAmount: isLow ? 3500000000 : isHigh ? 25000000000 : 12000000000,
-        status_penanaman_modal: '02',
+        status_penanaman_modal: (companyStore.activeCompany.status_penanaman_modal || '02') as '01' | '02',
         flag_umkm: isLow ? 'Y' : 'N',
         laborCount: isLow ? 15 : 45,
         machineryDetails: 'Instalasi dan Perangkat Operasional Sesuai Standar Teknis KBLI',
@@ -313,16 +442,38 @@ export const usePermitStore = defineStore('permitStore', {
         jumlahLantai: 2,
         jumlahEstimasiPenghuni: 35,
         nomorImbUntukSlfEksisting: '',
-        disclaimerSimbg: true
-      };
-      this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-002'];
+        disclaimerSimbg: true,
 
-      // Pre-select appropriate documents from VFC if already stored
+        // DMN & Spatial Bindings
+        dynamic_params: dynamicDefaults,
+        assigned_authority_code: '02',
+        authority_tier: 'Kab/Kota',
+        designated_verifier_agency: 'DPMPTSP Kab. Bogor',
+        matched_rule_id: 'RULE_DEFAULT_DOMESTIC_LOCAL_02',
+        matched_rule_desc: 'Proyek PMDN dalam satu wilayah administratif kabupaten/kota standar -> Kewenangan Bupati/Walikota.',
+        statutory_sla_days: stage1.statutory_sla_days,
+        spatial_parcel_binding_id: null,
+        is_cross_kab: false,
+        is_cross_prov: false,
+        zone_code: 'STANDARD',
+        zone_name: 'Kawasan Industri Sentul Sentra',
+        rdtr_status: 'SESUAI',
+        polygon_coordinates: [
+          { lat: -6.54125, lng: 106.86432 },
+          { lat: -6.54080, lng: 106.86550 },
+          { lat: -6.54210, lng: 106.86590 },
+          { lat: -6.54250, lng: 106.86480 }
+        ]
+      };
+
       this.activeWizard.selectedVfcDocIds = ['VFC-DOC-001', 'VFC-DOC-003'];
+      this.runStage2Routing();
+      this.persistDraft();
     },
 
     setWizardStep(step: number) {
       this.activeWizard.step = step;
+      this.persistDraft();
     },
 
     toggleVfcDocSelection(docId: string) {
@@ -332,9 +483,10 @@ export const usePermitStore = defineStore('permitStore', {
       } else {
         this.activeWizard.selectedVfcDocIds.push(docId);
       }
+      this.persistDraft();
     },
 
-    submitApplication() {
+    async submitApplication() {
       if (!this.activeWizard.kbli) return null;
       const companyStore = useCompanyStore();
       const kbli = this.activeWizard.kbli;
@@ -343,8 +495,8 @@ export const usePermitStore = defineStore('permitStore', {
 
       const riskCode = reqObj?.risk_code || kbli.risk_code;
       const riskLevel = reqObj?.risk_level || kbli.risk_level;
-      const authority = reqObj?.authority || kbli.authority;
-      const processingTime = reqObj?.processing_time || kbli.processing_time;
+      const authority = this.activeWizard.formData.designated_verifier_agency || reqObj?.authority || kbli.authority;
+      const processingTime = `${this.activeWizard.formData.statutory_sla_days} Hari Kerja`;
 
       const digest = Array.from({ length: 64 }, () =>
         Math.floor(Math.random() * 16).toString(16)
@@ -371,10 +523,26 @@ export const usePermitStore = defineStore('permitStore', {
         approvedAt: isAutoApprove
           ? new Date().toISOString().replace('T', ' ').slice(0, 16)
           : undefined,
-        slaDeadlineSeconds: isAutoApprove ? 0 : 259200,
+        slaDeadlineSeconds: isAutoApprove ? 0 : this.activeWizard.formData.statutory_sla_days * 86400,
         payloadDigest: digest,
         attachedVfcDocIds: [...this.activeWizard.selectedVfcDocIds],
-        formData: { ...this.activeWizard.formData },
+        assigned_authority_code: this.activeWizard.formData.assigned_authority_code,
+        designated_verifier_agency: this.activeWizard.formData.designated_verifier_agency,
+        matched_rule_id: this.activeWizard.formData.matched_rule_id,
+        statutory_sla_days: this.activeWizard.formData.statutory_sla_days,
+        dynamic_params: { ...this.activeWizard.formData.dynamic_params },
+        spatial_parcel_binding_id: this.activeWizard.formData.spatial_parcel_binding_id,
+        formData: {
+          projectName: this.activeWizard.formData.projectName,
+          investmentAmount: this.activeWizard.formData.investmentAmount,
+          locationAddress: this.activeWizard.formData.alamat_usaha,
+          province: this.activeWizard.formData.provinsi,
+          regency: this.activeWizard.formData.kab_kota,
+          landAreaSqMetres: this.activeWizard.formData.luas_tanah,
+          laborCount: this.activeWizard.formData.laborCount,
+          machineryDetails: this.activeWizard.formData.machineryDetails,
+          notes: this.activeWizard.formData.notes
+        },
         verifiableCredential: isAutoApprove
           ? {
             vcId: `urn:uuid:vc-bkpm-2026-${kbli.kbli_code}-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -391,7 +559,9 @@ export const usePermitStore = defineStore('permitStore', {
       };
 
       this.applications.unshift(newApp);
-      this.activeWizard.step = 5;
+      await idbPut(STORES.PERMITS, newApp);
+      this.activeWizard.step = 6;
+      await setAppState('active_wizard_draft', null);
       return newApp;
     }
   }

@@ -103,27 +103,29 @@
     </div>
 
     <!-- QR Modal -->
-    <div v-if="activeQrVc" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center text-gray-900 shadow-2xl">
-        <h3 class="text-base font-bold">QR Code Verifikasi W3C VC</h3>
-        <p class="text-xs text-gray-500 mt-1">Pindai QR ini untuk verifikasi keaslian dokumen di ledger publik BKPM</p>
+    <Teleport to="body">
+      <div v-if="activeQrVc" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 text-center text-gray-900 shadow-2xl">
+          <h3 class="text-base font-bold">QR Code Verifikasi W3C VC</h3>
+          <p class="text-xs text-gray-500 mt-1">Pindai QR ini untuk verifikasi keaslian dokumen di ledger publik BKPM</p>
 
-        <div class="my-6 p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl inline-block">
-          <svg class="w-44 h-44 text-slate-900 mx-auto" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h3v3h-3v-3zm0 5h3v3h-3v-3zm-5-5h3v3h-3v-3zm0 5h3v3h-3v-3z"/>
-          </svg>
+          <div class="my-6 p-4 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl inline-block">
+            <svg class="w-44 h-44 text-slate-900 mx-auto" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M2 2h8v8H2V2zm2 2v4h4V4H4zm9-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm13-2h3v3h-3v-3zm0 5h3v3h-3v-3zm-5-5h3v3h-3v-3zm0 5h3v3h-3v-3z"/>
+            </svg>
+          </div>
+
+          <p class="text-[10px] font-mono text-gray-400 break-all">{{ activeQrVc.qrCodeData }}</p>
+
+          <button
+            @click="activeQrVc = null"
+            class="mt-6 w-full py-2.5 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 transition"
+          >
+            Tutup
+          </button>
         </div>
-
-        <p class="text-[10px] font-mono text-gray-400 break-all">{{ activeQrVc.qrCodeData }}</p>
-
-        <button
-          @click="activeQrVc = null"
-          class="mt-6 w-full py-2.5 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 transition"
-        >
-          Tutup
-        </button>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 

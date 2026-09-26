@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { idbGetAll, idbPut, idbDelete, STORES } from '../utils/idbStorage';
 
 export interface VfcDocument {
   id: string;
@@ -21,6 +22,7 @@ export interface VfcCustomCategory {
 
 export const useVfcStore = defineStore('vfcStore', {
   state: () => ({
+    isHydrated: false,
     customCategories: [
       {
         key: 'CUSTOM_TEKNIS',
@@ -132,7 +134,34 @@ export const useVfcStore = defineStore('vfcStore', {
   },
 
   actions: {
-    addDocument(doc: Omit<VfcDocument, 'id' | 'uploadedAt' | 'sha256'>) {
+    async init() {
+      if (this.isHydrated) return;
+      try {
+        const storedDocs = await idbGetAll<VfcDocument>(STORES.VFC_DOCS);
+        if (storedDocs && storedDocs.length > 0) {
+          this.documents = storedDocs;
+        } else {
+          for (const d of this.documents) {
+            await idbPut(STORES.VFC_DOCS, d);
+          }
+        }
+
+        const storedCats = await idbGetAll<VfcCustomCategory>(STORES.VFC_CATEGORIES);
+        if (storedCats && storedCats.length > 0) {
+          this.customCategories = storedCats;
+        } else {
+          for (const c of this.customCategories) {
+            await idbPut(STORES.VFC_CATEGORIES, c);
+          }
+        }
+      } catch (err) {
+        console.warn('IDB VFC hydration fallback:', err);
+      } finally {
+        this.isHydrated = true;
+      }
+    },
+
+    async addDocument(doc: Omit<VfcDocument, 'id' | 'uploadedAt' | 'sha256'>) {
       const randomHash = Array.from({ length: 64 }, () =>
         Math.floor(Math.random() * 16).toString(16)
       ).join('');
@@ -143,11 +172,12 @@ export const useVfcStore = defineStore('vfcStore', {
         sha256: randomHash
       };
       this.documents.unshift(newDoc);
+      await idbPut(STORES.VFC_DOCS, newDoc);
       return newDoc;
     },
 
-    addCustomCategory(label: string, icon = '📁') {
-      const key = `CUSTOM_${label.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_${Date.now().toString().slice(-4)}`;
+    async addCustomCategory(label: string, icon = '📁') {
+      const key = `CAT_${label.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_${Date.now().toString().slice(-4)}`;
       const newCategory: VfcCustomCategory = {
         key,
         label,
@@ -155,11 +185,13 @@ export const useVfcStore = defineStore('vfcStore', {
         createdAt: new Date().toISOString()
       };
       this.customCategories.push(newCategory);
+      await idbPut(STORES.VFC_CATEGORIES, newCategory);
       return newCategory;
     },
 
-    removeCustomCategory(key: string) {
+    async removeCustomCategory(key: string) {
       this.customCategories = this.customCategories.filter((c) => c.key !== key);
+      await idbDelete(STORES.VFC_CATEGORIES, key);
     }
   }
 });

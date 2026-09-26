@@ -159,23 +159,25 @@
     </main>
 
     <!-- Mobile Drawer for Virtual Filing Cabinet Island -->
-    <div
-      v-if="showMobileVfc"
-      class="fixed inset-0 z-50 lg:hidden flex justify-end bg-slate-900/60 backdrop-blur-xs"
-      @click.self="showMobileVfc = false"
-    >
-      <div class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
-        <div class="p-3 bg-slate-900 text-white flex justify-between items-center">
-          <span class="text-xs font-bold">Virtual Filing Cabinet</span>
-          <button @click="showMobileVfc = false" class="text-slate-400 hover:text-white p-1">
-            ✕
-          </button>
-        </div>
-        <div class="flex-1 overflow-hidden">
-          <VirtualFilingCabinet />
+    <Teleport to="body">
+      <div
+        v-if="showMobileVfc"
+        class="fixed inset-0 z-[80] lg:hidden flex justify-end bg-slate-900/60 backdrop-blur-xs"
+        @click.self="showMobileVfc = false"
+      >
+        <div class="w-full max-w-md bg-white h-full shadow-2xl flex flex-col">
+          <div class="p-3 bg-slate-900 text-white flex justify-between items-center">
+            <span class="text-xs font-bold">Virtual Filing Cabinet</span>
+            <button @click="showMobileVfc = false" class="text-slate-400 hover:text-white p-1">
+              ✕
+            </button>
+          </div>
+          <div class="flex-1 overflow-hidden">
+            <VirtualFilingCabinet />
+          </div>
         </div>
       </div>
-    </div>
+    </Teleport>
   </div>
 </template>
 

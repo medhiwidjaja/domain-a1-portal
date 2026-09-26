@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import { idbGetAll, idbPut, getAppState, setAppState, STORES } from '../utils/idbStorage';
 
 export interface BusinessEntity {
   id: string;
@@ -115,7 +116,8 @@ export const useCompanyStore = defineStore('companyStore', {
         ]
       }
     ] as BusinessEntity[],
-    activeCompanyId: 'COMP-001'
+    activeCompanyId: 'COMP-001',
+    isHydrated: false
   }),
   getters: {
     activeCompany(state): BusinessEntity {
@@ -130,18 +132,41 @@ export const useCompanyStore = defineStore('companyStore', {
     }
   },
   actions: {
-    setActiveCompany(id: string) {
-      if (this.companies.some((c) => c.id === id)) {
-        this.activeCompanyId = id;
+    async init() {
+      if (this.isHydrated) return;
+      try {
+        const storedCompanies = await idbGetAll<BusinessEntity>(STORES.COMPANIES);
+        if (storedCompanies && storedCompanies.length > 0) {
+          this.companies = storedCompanies;
+        } else {
+          for (const c of this.companies) {
+            await idbPut(STORES.COMPANIES, c);
+          }
+        }
+        const activeId = await getAppState<string>('activeCompanyId');
+        if (activeId && this.companies.some((c) => c.id === activeId)) {
+          this.activeCompanyId = activeId;
+        }
+      } catch (err) {
+        console.warn('IDB company hydration fallback:', err);
+      } finally {
+        this.isHydrated = true;
       }
     },
-    updateCompanyProfile(id: string, updatedData: Partial<BusinessEntity>) {
+    async setActiveCompany(id: string) {
+      if (this.companies.some((c) => c.id === id)) {
+        this.activeCompanyId = id;
+        await setAppState('activeCompanyId', id);
+      }
+    },
+    async updateCompanyProfile(id: string, updatedData: Partial<BusinessEntity>) {
       const index = this.companies.findIndex((c) => c.id === id);
       if (index !== -1) {
         this.companies[index] = {
           ...this.companies[index],
           ...updatedData
         };
+        await idbPut(STORES.COMPANIES, this.companies[index]);
       }
     }
   }
