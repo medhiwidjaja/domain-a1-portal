@@ -126,6 +126,13 @@
                       >
                         SLA: {{ scope.licensing_requirements[0].processing_time }}
                       </span>
+                      <span
+                        v-if="scope.pb_umku && scope.pb_umku.length > 0"
+                        class="text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded flex items-center space-x-1"
+                      >
+                        <span>📦</span>
+                        <span>{{ scope.pb_umku.length }} PB-UMKU Terkait</span>
+                      </span>
                     </div>
 
                     <!-- Scope Title -->
@@ -300,6 +307,87 @@
               </li>
             </ul>
           </div>
+
+          <!-- PB-UMKU Section: Supporting Business Permits -->
+          <div v-if="modalScopePbUmku.length > 0" class="border-2 border-amber-300 bg-amber-50/50 rounded-xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="text-base">📦</span>
+                <h4 class="font-bold text-xs text-amber-900">
+                  Izin Berusaha Untuk Menunjang Kegiatan Usaha (PB-UMKU) Terkait:
+                </h4>
+                <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-full font-mono">
+                  {{ modalScopePbUmku.length }} Izin Terdaftar
+                </span>
+              </div>
+              <span class="text-[10px] text-amber-800 font-medium bg-amber-100/80 px-2 py-0.5 rounded border border-amber-200">
+                Non-Blocking (Paralel Mandiri)
+              </span>
+            </div>
+
+            <p class="text-[11px] text-amber-800 leading-relaxed">
+              Ruang lingkup KBLI ini memerlukan perizinan pendukung (PB-UMKU). Pelajari seluruh persyaratan teknis di bawah ini sebagai persiapan awal. PB-UMKU dapat diproses melalui Wizard Pengajuan Izin setelah NIB Izin Utama diterbitkan.
+            </p>
+
+            <div class="space-y-3 pt-1">
+              <div
+                v-for="(umku, uIdx) in modalScopePbUmku"
+                :key="umku.umku_code || uIdx"
+                class="bg-white border border-amber-200 rounded-lg p-3.5 shadow-2xs space-y-2.5"
+              >
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-amber-100">
+                  <div>
+                    <div class="flex items-center space-x-2">
+                      <span class="text-xs font-bold text-gray-900">{{ umku.title }}</span>
+                      <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold">
+                        {{ umku.umku_code }}
+                      </span>
+                    </div>
+                    <p v-if="umku.description" class="text-[11px] text-gray-600 mt-0.5">
+                      {{ umku.description }}
+                    </p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-1.5 shrink-0">
+                    <span class="text-[10px] bg-blue-50 text-blue-800 px-2 py-0.5 rounded font-semibold border border-blue-100">
+                      {{ umku.authority }}
+                    </span>
+                    <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-semibold border border-emerald-100">
+                      SLA: {{ umku.processing_time }}
+                    </span>
+                    <span v-if="umku.pnbp_fee" class="text-[10px] bg-purple-50 text-purple-800 px-2 py-0.5 rounded font-semibold border border-purple-100">
+                      {{ umku.pnbp_fee }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Persyaratan Teknis PB-UMKU -->
+                <div v-if="umku.requirements && umku.requirements.length > 0">
+                  <span class="text-[11px] font-bold text-gray-800 block mb-1">
+                    📋 Persyaratan Dokumen Teknis PB-UMKU:
+                  </span>
+                  <ul class="text-[11px] text-gray-700 space-y-1 pl-1">
+                    <li v-for="(r, rIdx) in umku.requirements" :key="rIdx" class="flex items-start space-x-1.5">
+                      <span class="text-amber-600 font-bold shrink-0">•</span>
+                      <span>{{ r }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Kewajiban PB-UMKU -->
+                <div v-if="umku.obligations && umku.obligations.length > 0">
+                  <span class="text-[11px] font-bold text-gray-800 block mb-1">
+                    ⚖️ Kewajiban Pemegang Izin PB-UMKU:
+                  </span>
+                  <ul class="text-[11px] text-gray-700 space-y-1 pl-1">
+                    <li v-for="(o, oIdx) in umku.obligations" :key="oIdx" class="flex items-start space-x-1.5">
+                      <span class="text-emerald-600 font-bold shrink-0">✓</span>
+                      <span>{{ o }}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="mt-6 flex justify-end space-x-3 pt-4 border-t">
@@ -387,6 +475,22 @@ const modalScopeParameters = computed<string[]>(() => {
     }
   }
   return params;
+});
+
+const modalScopePbUmku = computed<any[]>(() => {
+  const scope = activeModalScope.value;
+  if (!scope) return [];
+  if (Array.isArray(scope.pb_umku) && scope.pb_umku.length > 0) {
+    return scope.pb_umku;
+  }
+  if (scope.licensing_requirements) {
+    for (const lr of scope.licensing_requirements) {
+      if (Array.isArray(lr.pb_umku) && lr.pb_umku.length > 0) {
+        return lr.pb_umku;
+      }
+    }
+  }
+  return [];
 });
 
 function getRiskBadgeClass(code: string) {

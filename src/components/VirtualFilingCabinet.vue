@@ -178,11 +178,12 @@
                       vc.category === 'KKPR' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
                       vc.category === 'LINGKUNGAN' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
                       vc.category === 'PBG_SLF' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                      vc.category === 'PB_UMKU' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
                       'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                     ]"
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>{{ vc.category === 'PBG_SLF' ? 'PBG / SLF' : vc.category }}</span>
+                    <span>{{ vc.category === 'PBG_SLF' ? 'PBG / SLF' : vc.category === 'PB_UMKU' ? 'PB-UMKU' : vc.category }}</span>
                   </span>
                   <span class="text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
                     {{ vc.credentialType }}
@@ -199,6 +200,15 @@
 
                   <!-- Key Claims Highlights -->
                   <div v-if="vc.claims" class="mt-2 bg-slate-800/80 p-2 rounded-lg text-[9px] font-mono space-y-0.5 border border-slate-700">
+                    <div v-if="vc.claims.nomor_izin_umku" class="truncate text-amber-300 font-bold">
+                      No Izin: {{ vc.claims.nomor_izin_umku }}
+                    </div>
+                    <div v-if="vc.claims.nama_varietas" class="truncate text-slate-200">
+                      Objek: {{ vc.claims.nama_varietas }}
+                    </div>
+                    <div v-if="vc.claims.nomor_nib_induk" class="truncate text-slate-400">
+                      NIB Induk: {{ vc.claims.nomor_nib_induk }}
+                    </div>
                     <div v-if="vc.claims.nomor_kkpr" class="truncate text-cyan-300">
                       No: {{ vc.claims.nomor_kkpr }}
                     </div>

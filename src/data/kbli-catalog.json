@@ -6074,6 +6074,28 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi lintas Kabupaten/kota",
               "Usaha berlokasi lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
             ]
           },
           {
@@ -6101,6 +6123,50 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi lintas Kabupaten/kota",
               "Usaha berlokasi lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
+            ]
+          }
+        ],
+        "pb_umku": [
+          {
+            "umku_code": "UMKU-01285-01",
+            "title": "Pendaftaran Varietas Tanaman Hortikultura",
+            "authority": "Kementerian Pertanian (PVTPP)",
+            "processing_time": "10 Hari Kerja",
+            "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+            "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+            "requirements": [
+              "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+              "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+              "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+              "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+              "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+            ],
+            "obligations": [
+              "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+              "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+              "Menjaga kemurnian genetik varietas terdaftar"
             ]
           }
         ]
@@ -6132,6 +6198,28 @@
             ],
             "parameters": [
               "Seluruh"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-02",
+                "title": "Pelepasan Varietas Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+                "processing_time": "14 Hari Kerja",
+                "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+                "description": "Izin edar dan pelepasan varietas unggul bibit biofarmaka/ginseng oleh Tim Penilai Pelepasan Varietas (TP2V).",
+                "requirements": [
+                  "Proposal pelepasan varietas dilengkapi data silsilah & metodologi pemuliaan",
+                  "Hasil uji adaptasi / observasi multi-lokasi minimal 2 siklus pertanaman",
+                  "Hasil analisis mutu kimiawi / kandungan zat aktif biofarmaka",
+                  "Ketersediaan benih sumber minimal kelas Benih Pokok (BP)",
+                  "Rekomendasi dari Dinas Pertanian / Perkebunan Provinsi"
+                ],
+                "obligations": [
+                  "Menyediakan benih sumber bagi produsen benih resmi",
+                  "Menerapkan standar mutu sertifikasi benih sesuai standar teknis Ditjen Perkebunan",
+                  "Melaporkan pemanfaatan dan sebaran geografis pertanaman varietas"
+                ]
+              }
             ]
           },
           {
@@ -6170,6 +6258,50 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi di lintas Kabupaten/kota",
               "Usaha berlokasi di lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-02",
+                "title": "Pelepasan Varietas Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+                "processing_time": "14 Hari Kerja",
+                "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+                "description": "Izin edar dan pelepasan varietas unggul bibit biofarmaka/ginseng oleh Tim Penilai Pelepasan Varietas (TP2V).",
+                "requirements": [
+                  "Proposal pelepasan varietas dilengkapi data silsilah & metodologi pemuliaan",
+                  "Hasil uji adaptasi / observasi multi-lokasi minimal 2 siklus pertanaman",
+                  "Hasil analisis mutu kimiawi / kandungan zat aktif biofarmaka",
+                  "Ketersediaan benih sumber minimal kelas Benih Pokok (BP)",
+                  "Rekomendasi dari Dinas Pertanian / Perkebunan Provinsi"
+                ],
+                "obligations": [
+                  "Menyediakan benih sumber bagi produsen benih resmi",
+                  "Menerapkan standar mutu sertifikasi benih sesuai standar teknis Ditjen Perkebunan",
+                  "Melaporkan pemanfaatan dan sebaran geografis pertanaman varietas"
+                ]
+              }
+            ]
+          }
+        ],
+        "pb_umku": [
+          {
+            "umku_code": "UMKU-01285-02",
+            "title": "Pelepasan Varietas Tanaman Perkebunan",
+            "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+            "processing_time": "14 Hari Kerja",
+            "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+            "description": "Izin edar dan pelepasan varietas unggul bibit biofarmaka/ginseng oleh Tim Penilai Pelepasan Varietas (TP2V).",
+            "requirements": [
+              "Proposal pelepasan varietas dilengkapi data silsilah & metodologi pemuliaan",
+              "Hasil uji adaptasi / observasi multi-lokasi minimal 2 siklus pertanaman",
+              "Hasil analisis mutu kimiawi / kandungan zat aktif biofarmaka",
+              "Ketersediaan benih sumber minimal kelas Benih Pokok (BP)",
+              "Rekomendasi dari Dinas Pertanian / Perkebunan Provinsi"
+            ],
+            "obligations": [
+              "Menyediakan benih sumber bagi produsen benih resmi",
+              "Menerapkan standar mutu sertifikasi benih sesuai standar teknis Ditjen Perkebunan",
+              "Melaporkan pemanfaatan dan sebaran geografis pertanaman varietas"
             ]
           }
         ]
@@ -6199,6 +6331,28 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi di lintas Kabupaten/kota",
               "Usaha berlokasi di lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
             ]
           },
           {
@@ -6223,6 +6377,28 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi di lintas Kabupaten/kota",
               "Usaha berlokasi di lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
             ]
           },
           {
@@ -6248,6 +6424,28 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi di lintas Kabupaten/kota",
               "Usaha berlokasi di lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
             ]
           },
           {
@@ -6272,6 +6470,50 @@
             ],
             "parameters": [
               "Seluruh"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01285-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+                  "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+                ],
+                "obligations": [
+                  "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+                  "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+                  "Menjaga kemurnian genetik varietas terdaftar"
+                ]
+              }
+            ]
+          }
+        ],
+        "pb_umku": [
+          {
+            "umku_code": "UMKU-01285-01",
+            "title": "Pendaftaran Varietas Tanaman Hortikultura",
+            "authority": "Kementerian Pertanian (PVTPP)",
+            "processing_time": "10 Hari Kerja",
+            "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+            "description": "Pendaftaran varietas lokal/introduksi tanaman obat rimpang untuk peredaran benih bersertifikat nasional.",
+            "requirements": [
+              "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+              "Deskripsi morfologi dan karakteristik varietas tanaman rimpang",
+              "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+              "Foto berwarna organ tanaman (daun, bunga, rimpang/akar)",
+              "Sertifikat kompetensi pemulia tanaman atau dokumen kerjasama pemuliaan"
+            ],
+            "obligations": [
+              "Memelihara benih penjenis (breeder seed) secara berkelanjutan",
+              "Menyampaikan laporan produksi dan peredaran benih setiap 6 bulan sekali",
+              "Menjaga kemurnian genetik varietas terdaftar"
             ]
           }
         ]
@@ -6315,6 +6557,26 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi lintas Kabupaten/kota",
               "Usaha berlokasi lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01286-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman biofarmaka non-rimpang (kapulaga, lidah buaya, mahkota dewa, dll).",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi varietas biofarmaka non-rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Sertifikat kompetensi pemulia tanaman"
+                ],
+                "obligations": [
+                  "Memelihara koleksi materi genetik varietas terdaftar",
+                  "Menyampaikan laporan produksi dan peredaran benih secara periodik"
+                ]
+              }
             ]
           },
           {
@@ -6342,6 +6604,46 @@
               "Usaha berlokasi di Kabupaten/kota",
               "Usaha berlokasi lintas Kabupaten/kota",
               "Usaha berlokasi lintas Provinsi"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01286-01",
+                "title": "Pendaftaran Varietas Tanaman Hortikultura",
+                "authority": "Kementerian Pertanian (PVTPP)",
+                "processing_time": "10 Hari Kerja",
+                "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+                "description": "Pendaftaran varietas lokal/introduksi tanaman biofarmaka non-rimpang (kapulaga, lidah buaya, mahkota dewa, dll).",
+                "requirements": [
+                  "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+                  "Deskripsi morfologi varietas biofarmaka non-rimpang",
+                  "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+                  "Sertifikat kompetensi pemulia tanaman"
+                ],
+                "obligations": [
+                  "Memelihara koleksi materi genetik varietas terdaftar",
+                  "Menyampaikan laporan produksi dan peredaran benih secara periodik"
+                ]
+              }
+            ]
+          }
+        ],
+        "pb_umku": [
+          {
+            "umku_code": "UMKU-01286-01",
+            "title": "Pendaftaran Varietas Tanaman Hortikultura",
+            "authority": "Kementerian Pertanian (PVTPP)",
+            "processing_time": "10 Hari Kerja",
+            "pnbp_fee": "Rp 0,- (Fasilitasi Negara)",
+            "description": "Pendaftaran varietas lokal/introduksi tanaman biofarmaka non-rimpang (kapulaga, lidah buaya, mahkota dewa, dll).",
+            "requirements": [
+              "Laporan hasil uji kebaruan, keunikan, keseragaman, dan kestabilan (BUSS)",
+              "Deskripsi morfologi varietas biofarmaka non-rimpang",
+              "Surat pernyataan asal-usul genetik / silsilah varietas bermaterai",
+              "Sertifikat kompetensi pemulia tanaman"
+            ],
+            "obligations": [
+              "Memelihara koleksi materi genetik varietas terdaftar",
+              "Menyampaikan laporan produksi dan peredaran benih secara periodik"
             ]
           }
         ]
@@ -6373,6 +6675,44 @@
             ],
             "parameters": [
               "Seluruh"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01286-02",
+                "title": "Pengeluaran dan Pemasukan Benih Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan & Badan Karantina)",
+                "processing_time": "5 Hari Kerja",
+                "pnbp_fee": "Rp 1.000.000,- (PNBP)",
+                "description": "Izin lalu lintas, ekspor, atau impor benih sumber tanaman obat/perkebunan (kina, adas pinang, gambir).",
+                "requirements": [
+                  "Sertifikat Kesehatan Tumbuhan (Phytosanitary Certificate)",
+                  "Sertifikat Mutu dan Standar Uji Daya Berkecambah / Kemurnian",
+                  "Invoice & Packing List benih perkebunan",
+                  "Surat Rekomendasi Teknis Pemasukan/Pengeluaran dari Ditjen Perkebunan"
+                ],
+                "obligations": [
+                  "Melaporkan realisasi distribusi benih maksimal 7 hari kerja pasca-kedatangan",
+                  "Melaksanakan tindakan karantina dan uji pasca-masuk"
+                ]
+              },
+              {
+                "umku_code": "UMKU-01286-03",
+                "title": "Pelepasan Varietas Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+                "processing_time": "14 Hari Kerja",
+                "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+                "description": "Izin pelepasan varietas unggul bibit kina, pinang, atau gambir nasional.",
+                "requirements": [
+                  "Proposal pelepasan varietas dilengkapi data keunggulan agronomis",
+                  "Hasil uji keunggulan dan adaptasi lingkungan di beberapa sentra",
+                  "Hasil analisis laboratorium kandungan alkaloid / bahan aktif",
+                  "Ketersediaan benih sumber bersertifikat"
+                ],
+                "obligations": [
+                  "Menjamin ketersediaan benih sumber berstandar bagi penangkar benih",
+                  "Melaporkan sebaran peredaran benih kepada Menteri Pertanian"
+                ]
+              }
             ]
           },
           {
@@ -6407,6 +6747,82 @@
             ],
             "parameters": [
               "Seluruh"
+            ],
+            "pb_umku": [
+              {
+                "umku_code": "UMKU-01286-02",
+                "title": "Pengeluaran dan Pemasukan Benih Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan & Badan Karantina)",
+                "processing_time": "5 Hari Kerja",
+                "pnbp_fee": "Rp 1.000.000,- (PNBP)",
+                "description": "Izin lalu lintas, ekspor, atau impor benih sumber tanaman obat/perkebunan (kina, adas pinang, gambir).",
+                "requirements": [
+                  "Sertifikat Kesehatan Tumbuhan (Phytosanitary Certificate)",
+                  "Sertifikat Mutu dan Standar Uji Daya Berkecambah / Kemurnian",
+                  "Invoice & Packing List benih perkebunan",
+                  "Surat Rekomendasi Teknis Pemasukan/Pengeluaran dari Ditjen Perkebunan"
+                ],
+                "obligations": [
+                  "Melaporkan realisasi distribusi benih maksimal 7 hari kerja pasca-kedatangan",
+                  "Melaksanakan tindakan karantina dan uji pasca-masuk"
+                ]
+              },
+              {
+                "umku_code": "UMKU-01286-03",
+                "title": "Pelepasan Varietas Tanaman Perkebunan",
+                "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+                "processing_time": "14 Hari Kerja",
+                "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+                "description": "Izin pelepasan varietas unggul bibit kina, pinang, atau gambir nasional.",
+                "requirements": [
+                  "Proposal pelepasan varietas dilengkapi data keunggulan agronomis",
+                  "Hasil uji keunggulan dan adaptasi lingkungan di beberapa sentra",
+                  "Hasil analisis laboratorium kandungan alkaloid / bahan aktif",
+                  "Ketersediaan benih sumber bersertifikat"
+                ],
+                "obligations": [
+                  "Menjamin ketersediaan benih sumber berstandar bagi penangkar benih",
+                  "Melaporkan sebaran peredaran benih kepada Menteri Pertanian"
+                ]
+              }
+            ]
+          }
+        ],
+        "pb_umku": [
+          {
+            "umku_code": "UMKU-01286-02",
+            "title": "Pengeluaran dan Pemasukan Benih Tanaman Perkebunan",
+            "authority": "Kementerian Pertanian (Ditjen Perkebunan & Badan Karantina)",
+            "processing_time": "5 Hari Kerja",
+            "pnbp_fee": "Rp 1.000.000,- (PNBP)",
+            "description": "Izin lalu lintas, ekspor, atau impor benih sumber tanaman obat/perkebunan (kina, adas pinang, gambir).",
+            "requirements": [
+              "Sertifikat Kesehatan Tumbuhan (Phytosanitary Certificate)",
+              "Sertifikat Mutu dan Standar Uji Daya Berkecambah / Kemurnian",
+              "Invoice & Packing List benih perkebunan",
+              "Surat Rekomendasi Teknis Pemasukan/Pengeluaran dari Ditjen Perkebunan"
+            ],
+            "obligations": [
+              "Melaporkan realisasi distribusi benih maksimal 7 hari kerja pasca-kedatangan",
+              "Melaksanakan tindakan karantina dan uji pasca-masuk"
+            ]
+          },
+          {
+            "umku_code": "UMKU-01286-03",
+            "title": "Pelepasan Varietas Tanaman Perkebunan",
+            "authority": "Kementerian Pertanian (Ditjen Perkebunan)",
+            "processing_time": "14 Hari Kerja",
+            "pnbp_fee": "Rp 2.500.000,- (PNBP Sesuai PP Tarif Kementan)",
+            "description": "Izin pelepasan varietas unggul bibit kina, pinang, atau gambir nasional.",
+            "requirements": [
+              "Proposal pelepasan varietas dilengkapi data keunggulan agronomis",
+              "Hasil uji keunggulan dan adaptasi lingkungan di beberapa sentra",
+              "Hasil analisis laboratorium kandungan alkaloid / bahan aktif",
+              "Ketersediaan benih sumber bersertifikat"
+            ],
+            "obligations": [
+              "Menjamin ketersediaan benih sumber berstandar bagi penangkar benih",
+              "Melaporkan sebaran peredaran benih kepada Menteri Pertanian"
             ]
           }
         ]

@@ -288,7 +288,22 @@ export const usePermitStore = defineStore('permitStore', {
         }
         const savedDraft = await getAppState<any>('active_wizard_draft');
         if (savedDraft && savedDraft.kbli) {
+          const catalogItem = this.catalog.find((k) => k.kbli_code === savedDraft.kbli.kbli_code);
+          if (catalogItem) {
+            savedDraft.kbli = catalogItem;
+            if (savedDraft.selectedScope) {
+              const matchedScope = catalogItem.scopes?.find((s) => s.sequence === savedDraft.selectedScope.sequence);
+              if (matchedScope) {
+                savedDraft.selectedScope = matchedScope;
+              }
+            }
+          }
           this.activeWizard = savedDraft;
+        } else if (!this.activeWizard.kbli) {
+          const defaultKbli = this.catalog.find((k) => k.kbli_code === '01285');
+          if (defaultKbli) {
+            this.startNewApplication(defaultKbli, defaultKbli.scopes[0]);
+          }
         }
       } catch (err) {
         console.warn('IDB permit hydration fallback:', err);

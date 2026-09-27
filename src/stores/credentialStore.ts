@@ -8,7 +8,8 @@ export type CredentialCategory =
   | 'LINGKUNGAN'
   | 'PBG_SLF'
   | 'NIB'
-  | 'SERTIFIKAT_STANDAR';
+  | 'SERTIFIKAT_STANDAR'
+  | 'PB_UMKU';
 
 export interface PersyaratanDasarCredential {
   id: string;

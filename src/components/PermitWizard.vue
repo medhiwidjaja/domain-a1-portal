@@ -66,8 +66,77 @@
           </div>
         </div>
 
-        <!-- Accordion Toolbar -->
-        <div class="mt-4 flex items-center justify-between text-xs pt-3 border-t border-gray-100">
+        <!-- Multi-Track Permitting Selector (Main KBLI + PB-UMKU) -->
+        <div v-if="activeKbliUmkuList.length > 0" class="mt-4 pt-3 border-t border-gray-100">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] font-bold text-gray-700 flex items-center space-x-1.5">
+              <span>🧭</span>
+              <span>Jalur Permohonan Perizinan (Multi-Track Engine):</span>
+            </span>
+            <span class="text-[10px] text-gray-500 font-medium">
+              1 Izin Utama + {{ activeKbliUmkuList.length }} Izin Pendukung (PB-UMKU)
+            </span>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <!-- Track 0: Main KBLI (Default) -->
+            <button
+              type="button"
+              @click="activeTrack = 'MAIN'"
+              class="flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs border"
+              :class="[
+                activeTrack === 'MAIN'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-xs ring-2 ring-blue-400/40'
+                  : 'bg-white text-gray-700 hover:bg-slate-50 border-gray-200'
+              ]"
+            >
+              <span>🏛️</span>
+              <span>Izin Utama (KBLI {{ permitStore.activeWizard.kbli.kbli_code }})</span>
+              <span
+                class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
+                :class="[
+                  isMainPermitIssued
+                    ? (activeTrack === 'MAIN' ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-800')
+                    : (activeTrack === 'MAIN' ? 'bg-blue-500 text-white' : 'bg-blue-100 text-blue-800')
+                ]"
+              >
+                {{ isMainPermitIssued ? '✓ NIB Terbit' : 'Draf Tahap ' + permitStore.activeWizard.step }}
+              </span>
+            </button>
+
+            <!-- Track 1..N: PB-UMKU -->
+            <button
+              v-for="umku in activeKbliUmkuList"
+              :key="umku.umku_code"
+              type="button"
+              @click="activeTrack = umku.umku_code"
+              class="flex items-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold transition shadow-2xs border"
+              :class="[
+                activeTrack === umku.umku_code
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-xs ring-2 ring-amber-400/40'
+                  : 'bg-white text-gray-700 hover:bg-slate-50 border-gray-200'
+              ]"
+            >
+              <span>📦</span>
+              <span class="truncate max-w-[210px]">{{ umku.title }}</span>
+              <span
+                class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold"
+                :class="[
+                  isUmkuIssued(umku.umku_code)
+                    ? (activeTrack === umku.umku_code ? 'bg-emerald-500 text-white' : 'bg-emerald-100 text-emerald-800')
+                    : isMainPermitIssued
+                      ? (activeTrack === umku.umku_code ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-800')
+                      : (activeTrack === umku.umku_code ? 'bg-gray-600 text-gray-200' : 'bg-gray-100 text-gray-500')
+                ]"
+              >
+                {{ isUmkuIssued(umku.umku_code) ? '✓ Terbit' : isMainPermitIssued ? 'Siap Diajukan' : '🔒 Menunggu NIB' }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Accordion Toolbar (Only for Main Track) -->
+        <div v-if="activeTrack === 'MAIN'" class="mt-4 flex items-center justify-between text-xs pt-3 border-t border-gray-100">
           <div class="flex items-center space-x-2">
             <span class="text-xs font-semibold text-gray-600">Alur Pengisian Form:</span>
             <span class="text-[11px] bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded font-mono font-bold">
@@ -84,8 +153,8 @@
         </div>
       </div>
 
-      <!-- Accordion Form Container (Steps 1 to 5) -->
-      <div v-if="permitStore.activeWizard.step !== 6" class="space-y-4">
+      <!-- Accordion Form Container (Steps 1 to 5, Main Track Only) -->
+      <div v-if="activeTrack === 'MAIN' && permitStore.activeWizard.step !== 6" class="space-y-4">
         <!-- ======================================================== -->
         <!-- ACCORDION ITEM 1: Profil Usaha, Parameter KBLI & Aturan DMN -->
         <!-- ======================================================== -->
@@ -1342,9 +1411,9 @@
   </div>
 
       <!-- ======================================================== -->
-      <!-- STEP 6: Success & Transmitted -->
+      <!-- STEP 6: Success & Transmitted (Main Track Only) -->
       <!-- ======================================================== -->
-      <div v-if="permitStore.activeWizard.step === 6" class="text-center py-12 space-y-4">
+      <div v-if="activeTrack === 'MAIN' && permitStore.activeWizard.step === 6" class="text-center py-12 space-y-4">
         <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
           <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
@@ -1368,6 +1437,446 @@
           >
             Lihat Portfolio Credential →
           </button>
+        </div>
+
+        <!-- PB-UMKU Next Step Card in Step 6 -->
+        <div v-if="activeKbliUmkuList.length > 0" class="mt-8 p-5 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl text-left max-w-xl mx-auto space-y-3 shadow-xs">
+          <div class="flex items-center space-x-2.5">
+            <span class="text-2xl">📦</span>
+            <div>
+              <h4 class="font-bold text-sm text-amber-950">Langkah Berikutnya: Izin Pendukung Usaha (PB-UMKU)</h4>
+              <p class="text-[11px] text-amber-800">
+                Izin utama (NIB) Anda telah terbit. Terdapat <strong>{{ activeKbliUmkuList.length }} PB-UMKU</strong> yang kini telah terbuka dan dapat diajukan secara paralel:
+              </p>
+            </div>
+          </div>
+          <div class="space-y-2 pt-1">
+            <div
+              v-for="u in activeKbliUmkuList"
+              :key="u.umku_code"
+              class="flex items-center justify-between p-3 bg-white border border-amber-200 rounded-xl"
+            >
+              <div>
+                <span class="font-bold text-xs text-gray-900 block">{{ u.title }}</span>
+                <span class="text-[10px] text-gray-500 font-mono">{{ u.authority }} • SLA: {{ u.processing_time }}</span>
+              </div>
+              <button
+                @click="activeTrack = u.umku_code"
+                class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow-xs transition"
+              >
+                {{ isUmkuIssued(u.umku_code) ? 'Lihat Izin Terbit →' : 'Ajukan PB-UMKU →' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- PB-UMKU TRACK INTERFACE (When activeTrack !== 'MAIN') -->
+      <!-- ======================================================== -->
+      <div v-if="activeTrack !== 'MAIN' && selectedPbUmku" class="space-y-6">
+        <!-- PB-UMKU Track Header -->
+        <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-2xl p-5 shadow-sm">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div class="space-y-1">
+              <div class="flex items-center space-x-2">
+                <span class="bg-amber-800/80 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
+                  Jalur PB-UMKU: {{ selectedPbUmku.umku_code }}
+                </span>
+                <span
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                  :class="[
+                    isUmkuIssued(selectedPbUmku.umku_code)
+                      ? 'bg-emerald-400 text-slate-900'
+                      : isMainPermitIssued
+                        ? 'bg-white text-amber-900'
+                        : 'bg-amber-900/60 text-amber-200'
+                  ]"
+                >
+                  {{ isUmkuIssued(selectedPbUmku.umku_code) ? '✅ Izin Terbit (Aktif)' : isMainPermitIssued ? '📝 Siap Diajukan' : '🔒 Menunggu Penerbitan NIB' }}
+                </span>
+              </div>
+              <h2 class="text-lg font-bold">{{ selectedPbUmku.title }}</h2>
+              <p class="text-xs text-amber-100 max-w-2xl leading-relaxed">
+                {{ selectedPbUmku.description }}
+              </p>
+            </div>
+
+            <div class="flex items-center space-x-2 shrink-0">
+              <button
+                type="button"
+                @click="activeTrack = 'MAIN'"
+                class="px-3.5 py-2 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-xl border border-white/20 transition"
+              >
+                ← Kembali ke Izin Utama
+              </button>
+            </div>
+          </div>
+
+          <!-- Metadata Tags -->
+          <div class="mt-4 pt-3 border-t border-amber-400/40 flex flex-wrap items-center gap-2 text-xs">
+            <span class="bg-amber-700/80 px-2.5 py-1 rounded-lg">
+              Instansi Pembina: <strong>{{ selectedPbUmku.authority }}</strong>
+            </span>
+            <span class="bg-amber-700/80 px-2.5 py-1 rounded-lg">
+              SLA Pemrosesan: <strong>{{ selectedPbUmku.processing_time }}</strong>
+            </span>
+            <span v-if="selectedPbUmku.pnbp_fee" class="bg-amber-700/80 px-2.5 py-1 rounded-lg">
+              Biaya PNBP: <strong>{{ selectedPbUmku.pnbp_fee }}</strong>
+            </span>
+            <span class="bg-amber-700/80 px-2.5 py-1 rounded-lg font-mono">
+              Induk: <strong>KBLI {{ permitStore.activeWizard.kbli.kbli_code }}</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- STATE A: LOCKED (Main Permit not yet issued) -->
+        <!-- ============================================== -->
+        <div v-if="!isMainPermitIssued" class="border border-amber-200 bg-amber-50/40 rounded-2xl p-6 space-y-6">
+          <div class="flex items-start space-x-4">
+            <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-2xl flex items-center justify-center shrink-0 text-xl font-bold">
+              🔒
+            </div>
+            <div class="space-y-1 flex-1">
+              <h3 class="text-sm font-bold text-amber-950">
+                PB-UMKU Memerlukan Izin Utama / NIB Terlebih Dahulu (PP 5/2021)
+              </h3>
+              <p class="text-xs text-amber-800 leading-relaxed">
+                Berdasarkan ketentuan Pasal 4 ayat (2) PP 5/2021 dan arsitektur perizinan terpadu Domain A1, Nomor Induk Berusaha (NIB) merupakan identitas tunggal legalitas usaha. Permohonan perizinan pendukung (PB-UMKU) memerlukan nomor referensi NIB induk yang sah sebelum berkas verifikasi teknis dapat dikirimkan ke kementerian pembina teknis (<strong>{{ selectedPbUmku.authority }}</strong>).
+              </p>
+              <div class="pt-2">
+                <button
+                  type="button"
+                  @click="activeTrack = 'MAIN'"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition inline-flex items-center space-x-2"
+                >
+                  <span>🏛️</span>
+                  <span>Lanjutkan & Selesaikan Draf Izin Utama Terlebih Dahulu →</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Preparation Checklist in VFC -->
+          <div class="bg-white border border-amber-200 rounded-xl p-5 space-y-4 shadow-2xs">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-xs text-gray-900">
+                  📋 Persiapan Dokumen Teknis PB-UMKU di Virtual Filing Cabinet:
+                </h4>
+                <p class="text-[11px] text-gray-500">
+                  Anda dapat menyiapkan dan mengunggah dokumen persyaratan ke VFC Anda sekarang agar saat NIB terbit, PB-UMKU dapat langsung diajukan dalam 1-klik.
+                </p>
+              </div>
+              <button
+                type="button"
+                @click="$emit('switch-tab', 'vfc')"
+                class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold rounded-lg transition"
+              >
+                Buka VFC Vault →
+              </button>
+            </div>
+
+            <div class="space-y-2">
+              <div
+                v-for="(req, rIdx) in selectedPbUmku.requirements"
+                :key="rIdx"
+                class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+              >
+                <div class="flex items-center space-x-2">
+                  <span class="text-amber-600 font-bold">•</span>
+                  <span class="text-gray-800">{{ req }}</span>
+                </div>
+                <label class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold cursor-pointer transition">
+                  <span>+ Unggah ke VFC</span>
+                  <input
+                    type="file"
+                    class="hidden"
+                    @change="onInlineUpload($event, 'TEKNIS', req)"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <!-- Obligations Preview -->
+            <div v-if="selectedPbUmku.obligations && selectedPbUmku.obligations.length > 0" class="pt-2 border-t border-gray-100">
+              <span class="text-[11px] font-bold text-gray-700 block mb-1">
+                ⚖️ Kewajiban Regulasi yang Akan Melekat:
+              </span>
+              <ul class="text-[11px] text-gray-600 space-y-1">
+                <li v-for="(o, oIdx) in selectedPbUmku.obligations" :key="oIdx" class="flex items-center space-x-1.5">
+                  <span class="text-emerald-600">✓</span>
+                  <span>{{ o }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- STATE B: UNLOCKED & READY FOR SUBMISSION -->
+        <!-- ============================================== -->
+        <div v-else-if="!isUmkuIssued(selectedPbUmku.umku_code)" class="space-y-6">
+          <!-- Unlocked Notice Banner -->
+          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-900">
+            <div class="flex items-center space-x-3">
+              <span class="text-xl">✅</span>
+              <div>
+                <span class="font-bold block">NIB Izin Utama Telah Terbit — Formulir PB-UMKU Terbuka</span>
+                <span class="text-[11px] text-emerald-700">
+                  PB-UMKU ini independen dan dapat diajukan tanpa menunggu PB-UMKU lainnya. NIB Induk: <strong>{{ mainPermitRecord?.id || companyStore.activeCompany.nib }}</strong>.
+                </span>
+              </div>
+            </div>
+            <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2.5 py-1 rounded-full font-mono shrink-0">
+              PP 5/2021 Terverifikasi
+            </span>
+          </div>
+
+          <!-- PB-UMKU Submission Form -->
+          <div class="border border-gray-200 rounded-2xl p-6 bg-white space-y-6 shadow-xs">
+            <h3 class="font-bold text-sm text-gray-900 border-b border-gray-100 pb-3 flex items-center space-x-2">
+              <span>📝</span>
+              <span>Formulir Permohonan Teknis: {{ selectedPbUmku.title }}</span>
+            </h3>
+
+            <!-- Parameter Usaha Teknis -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="space-y-1">
+                <label class="font-bold text-gray-700">Nomor NIB Induk (Otomatis)</label>
+                <input
+                  type="text"
+                  readonly
+                  :value="mainPermitRecord?.id || companyStore.activeCompany.nib"
+                  class="w-full p-2.5 bg-gray-100 border border-gray-300 rounded-xl text-gray-600 font-mono text-xs cursor-not-allowed"
+                />
+              </div>
+
+              <div class="space-y-1">
+                <label class="font-bold text-gray-700">Nama Badan Usaha / Pemohon</label>
+                <input
+                  type="text"
+                  readonly
+                  :value="companyStore.activeCompany.name"
+                  class="w-full p-2.5 bg-gray-100 border border-gray-300 rounded-xl text-gray-600 text-xs cursor-not-allowed"
+                />
+              </div>
+
+              <div class="md:col-span-2 space-y-1">
+                <label class="font-bold text-gray-700">Nama Objek / Varietas / Komoditas Teknis *</label>
+                <input
+                  type="text"
+                  v-model="getUmkuForm(selectedPbUmku.umku_code).varietyName"
+                  placeholder="Contoh: Varietas Rimpang Jahe Merah Sentul Unggul V1"
+                  class="w-full p-2.5 border border-gray-300 rounded-xl text-gray-800 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                />
+              </div>
+
+              <div class="md:col-span-2 space-y-1">
+                <label class="font-bold text-gray-700">Deskripsi Karakteristik Teknis & Hasil Uji Laboratorium *</label>
+                <textarea
+                  rows="3"
+                  v-model="getUmkuForm(selectedPbUmku.umku_code).technicalDescription"
+                  placeholder="Uraikan karakteristik agronomis, metodologi pemuliaan, atau spesifikasi mutu teknis..."
+                  class="w-full p-2.5 border border-gray-300 rounded-xl text-gray-800 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden leading-relaxed"
+                ></textarea>
+              </div>
+
+              <div class="md:col-span-2 space-y-1">
+                <label class="font-bold text-gray-700">Lokasi Kebun Percobaan / Fasilitas / Balai Pengujian *</label>
+                <input
+                  type="text"
+                  v-model="getUmkuForm(selectedPbUmku.umku_code).testingLocation"
+                  placeholder="Contoh: Balai Penelitian Tanaman Obat dan Laboratorium Terpadu"
+                  class="w-full p-2.5 border border-gray-300 rounded-xl text-gray-800 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+                />
+              </div>
+            </div>
+
+            <!-- Binding Dokumen Teknis dari VFC -->
+            <div class="pt-4 border-t border-gray-100 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h4 class="font-bold text-xs text-gray-900">
+                    📂 Tautkan Dokumen Persyaratan Teknis dari VFC:
+                  </h4>
+                  <p class="text-[11px] text-gray-500">
+                    Centang dokumen yang relevan dari brankas dokumen Anda atau unggah langsung.
+                  </p>
+                </div>
+                <span class="text-[11px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-200">
+                  {{ getUmkuForm(selectedPbUmku.umku_code).selectedDocIds.length }} Dokumen Terkait
+                </span>
+              </div>
+
+              <div class="space-y-2">
+                <div
+                  v-for="(req, rIdx) in selectedPbUmku.requirements"
+                  :key="rIdx"
+                  class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
+                >
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-gray-800">• {{ req }}</span>
+                    <label class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold cursor-pointer transition">
+                      <span>+ Upload File</span>
+                      <input
+                        type="file"
+                        class="hidden"
+                        @change="onInlineUpload($event, 'TEKNIS', req)"
+                      />
+                    </label>
+                  </div>
+
+                  <!-- Select from existing VFC docs -->
+                  <div class="flex items-center space-x-2 text-xs">
+                    <select
+                      @change="onSelectExistingDoc($event, 'TEKNIS')"
+                      class="flex-1 p-2 bg-white border border-gray-300 rounded-lg text-xs"
+                    >
+                      <option value="">-- Pilih Dokumen dari VFC Vault --</option>
+                      <option
+                        v-for="d in currentCompanyDocs"
+                        :key="d.id"
+                        :value="d.id"
+                      >
+                        {{ d.title }} ({{ d.category }} - {{ d.fileSize }})
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pernyataan Hukum -->
+            <div class="pt-4 border-t border-gray-100">
+              <label class="flex items-start space-x-2.5 cursor-pointer text-xs text-gray-700">
+                <input
+                  type="checkbox"
+                  v-model="getUmkuForm(selectedPbUmku.umku_code).declarationAgreed"
+                  class="mt-0.5 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                />
+                <span class="leading-relaxed">
+                  Saya menyatakan bahwa seluruh data karakteristik teknis dan dokumen persyaratan yang dilampirkan adalah sah, akurat, dan memenuhi standar teknis yang ditetapkan oleh <strong>{{ selectedPbUmku.authority }}</strong>.
+                </span>
+              </label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-gray-100 flex items-center justify-between">
+              <button
+                type="button"
+                @click="activeTrack = 'MAIN'"
+                class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition"
+              >
+                ← Kembali ke Izin Utama
+              </button>
+
+              <button
+                type="button"
+                :disabled="isSubmittingUmku || !getUmkuForm(selectedPbUmku.umku_code).declarationAgreed"
+                @click="handleUmkuSubmit(selectedPbUmku)"
+                class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-2"
+              >
+                <span>🔒</span>
+                <span>{{ isSubmittingUmku ? 'Memproses Credential...' : 'Kirim Permohonan PB-UMKU & Terbitkan Credential →' }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- STATE C: ISSUED / APPROVED (Verifiable Credential) -->
+        <!-- ============================================== -->
+        <div v-else class="border border-emerald-200 bg-emerald-50/30 rounded-2xl p-6 space-y-6 shadow-xs">
+          <div class="text-center py-4 space-y-2">
+            <div class="w-14 h-14 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl">
+              📜
+            </div>
+            <h3 class="text-lg font-bold text-gray-900">
+              Verifiable Credential PB-UMKU Telah Terbit!
+            </h3>
+            <p class="text-xs text-gray-600 max-w-lg mx-auto leading-relaxed">
+              Permohonan perizinan pendukung <strong>{{ selectedPbUmku.title }}</strong> telah disetujui oleh <strong>{{ selectedPbUmku.authority }}</strong> dan disegel sebagai W3C Verifiable Credential.
+            </p>
+          </div>
+
+          <!-- Credential Card Details -->
+          <div class="bg-gradient-to-br from-slate-900 via-slate-800 to-amber-950 text-white p-5 rounded-2xl shadow-xl max-w-xl mx-auto space-y-4 border border-amber-600/40">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+              <span class="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
+                <span>📦</span>
+                <span>{{ selectedPbUmku.title }}</span>
+              </span>
+              <span class="text-[10px] font-mono bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">
+                AKTIF (W3C VC)
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs font-mono">
+              <div>
+                <span class="text-slate-400 block text-[10px]">Nomor Izin PB-UMKU:</span>
+                <span class="font-bold text-white text-[11px] truncate block">
+                  {{ getUmkuCredential(selectedPbUmku.umku_code)?.claims?.nomor_izin_umku }}
+                </span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[10px]">NIB Induk Terikat:</span>
+                <span class="font-bold text-amber-300 text-[11px]">
+                  {{ getUmkuCredential(selectedPbUmku.umku_code)?.claims?.nomor_nib_induk }}
+                </span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-slate-400 block text-[10px]">Objek / Varietas Terdaftar:</span>
+                <span class="text-white text-[11px]">
+                  {{ getUmkuCredential(selectedPbUmku.umku_code)?.claims?.nama_varietas }}
+                </span>
+              </div>
+              <div class="col-span-2">
+                <span class="text-slate-400 block text-[10px]">Penerbit (Issuer):</span>
+                <span class="text-slate-300 text-[11px]">
+                  {{ getUmkuCredential(selectedPbUmku.umku_code)?.issuerName }}
+                </span>
+              </div>
+              <div class="col-span-2 bg-slate-950/80 p-2.5 rounded-lg border border-slate-700">
+                <span class="text-slate-400 block text-[9px]">SHA-256 Cryptographic Proof Hash:</span>
+                <span class="text-emerald-400 text-[9px] break-all block">
+                  {{ getUmkuCredential(selectedPbUmku.umku_code)?.proofHash }}
+                </span>
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between text-xs">
+              <span class="text-slate-400 text-[10px]">
+                Diterbitkan: {{ getUmkuCredential(selectedPbUmku.umku_code)?.issuedAt }}
+              </span>
+              <button
+                @click="$emit('switch-tab', 'credentials')"
+                class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-lg transition"
+              >
+                Buka di VFC Credentials →
+              </button>
+            </div>
+          </div>
+
+          <!-- Next Actions -->
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              @click="activeTrack = 'MAIN'"
+              class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-xl shadow-xs transition"
+            >
+              ← Kembali ke Izin Utama
+            </button>
+            <button
+              v-if="nextUnsubmittedUmku"
+              type="button"
+              @click="activeTrack = nextUnsubmittedUmku.umku_code"
+              class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow transition"
+            >
+              Lanjut Ajukan PB-UMKU Berikutnya: {{ nextUnsubmittedUmku.title }} →
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1689,6 +2198,134 @@ const activeScope = computed(() => {
 const activeScopeReq = computed(() => {
   return activeScope.value?.licensing_requirements?.[0] || null;
 });
+
+// Multi-Track Permitting State (Section 4 TO-BE Spec)
+const activeTrack = ref<'MAIN' | string>('MAIN');
+
+const activeKbliUmkuList = computed(() => {
+  const scope = activeScope.value;
+  if (!scope) return [];
+  if (Array.isArray(scope.pb_umku) && scope.pb_umku.length > 0) {
+    return scope.pb_umku;
+  }
+  if (scope.licensing_requirements) {
+    for (const lr of scope.licensing_requirements) {
+      if (Array.isArray(lr.pb_umku) && lr.pb_umku.length > 0) {
+        return lr.pb_umku;
+      }
+    }
+  }
+  return [];
+});
+
+const selectedPbUmku = computed(() => {
+  if (activeTrack.value === 'MAIN') return null;
+  return activeKbliUmkuList.value.find((u) => u.umku_code === activeTrack.value) || null;
+});
+
+const isMainPermitIssued = computed(() => {
+  if (permitStore.activeWizard.step === 6) return true;
+  const currentKbliCode = permitStore.activeWizard.kbli?.kbli_code;
+  if (!currentKbliCode) return false;
+  return permitStore.applications.some(
+    (app) => app.companyId === companyStore.activeCompanyId &&
+             app.kbliCode === currentKbliCode &&
+             app.status === 'APPROVED'
+  );
+});
+
+const mainPermitRecord = computed(() => {
+  const currentKbliCode = permitStore.activeWizard.kbli?.kbli_code;
+  if (!currentKbliCode) return null;
+  return (
+    permitStore.applications.find(
+      (app) => app.companyId === companyStore.activeCompanyId &&
+               app.kbliCode === currentKbliCode &&
+               app.status === 'APPROVED'
+    ) || (permitStore.activeWizard.step === 6 ? permitStore.applications[0] : null)
+  );
+});
+
+function getUmkuCredential(umkuCode: string) {
+  return credentialStore.activeCompanyCredentials.find(
+    (c) => c.category === 'PB_UMKU' && (c.claims?.umku_code === umkuCode || c.title.includes(umkuCode))
+  );
+}
+
+function isUmkuIssued(umkuCode: string) {
+  return !!getUmkuCredential(umkuCode);
+}
+
+const umkuFormData = reactive<Record<string, {
+  varietyName: string;
+  technicalDescription: string;
+  testingLocation: string;
+  selectedDocIds: string[];
+  declarationAgreed: boolean;
+}>>({});
+
+function getUmkuForm(umkuCode: string) {
+  if (!umkuFormData[umkuCode]) {
+    umkuFormData[umkuCode] = {
+      varietyName: 'Varietas Rimpang & Biofarmaka Sentul Unggul V1',
+      technicalDescription: 'Pengujian kebaruan dan kemurnian genetik varietas lokal dengan stabilitas hasil panen 12.5 ton/ha dan resistensi hama teruji.',
+      testingLocation: 'Stasiun Riset Agronomi Sentul & Balai Penelitian Tanaman Rempah dan Obat (Balittro)',
+      selectedDocIds: ['VFC-DOC-001'],
+      declarationAgreed: true
+    };
+  }
+  return umkuFormData[umkuCode];
+}
+
+const isSubmittingUmku = ref(false);
+
+async function handleUmkuSubmit(umku: any) {
+  isSubmittingUmku.value = true;
+  const form = getUmkuForm(umku.umku_code);
+  const mainPermit = mainPermitRecord.value;
+  const nibNumber = mainPermit?.id || companyStore.activeCompany.nib || 'NIB-2026-992100';
+
+  await credentialStore.issueCredential({
+    category: 'PB_UMKU',
+    title: `Verifiable PB-UMKU: ${umku.title}`,
+    kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01285',
+    kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+    credentialType: 'VerifiableUMKU',
+    issuerDid: umku.authority.includes('PVTPP')
+      ? 'did:oss:kementan:pvtpp:gov:id'
+      : 'did:oss:kementan:perkebunan:gov:id',
+    issuerName: umku.authority,
+    claims: {
+      umku_code: umku.umku_code,
+      nomor_izin_umku: `UMKU-${Date.now().toString().slice(-6)}/KEMTAN/2026`,
+      nama_varietas: form.varietyName,
+      deskripsi_teknis: form.technicalDescription,
+      lokasi_pengujian: form.testingLocation,
+      nomor_nib_induk: nibNumber,
+      instansi_pembina: umku.authority,
+      pnbp_status: umku.pnbp_fee?.includes('Rp 0') ? 'Bebas Tarif (Fasilitasi)' : 'Lunas Terverifikasi SIMPONI',
+      status_izin: 'AKTIF & BERLAKU NASIONAL',
+      dokumen_pendukung_vfc: form.selectedDocIds.length
+    }
+  });
+
+  isSubmittingUmku.value = false;
+  saveToastMessage.value = `Permohonan PB-UMKU "${umku.title}" berhasil diterbitkan!`;
+  setTimeout(() => {
+    saveToastMessage.value = null;
+  }, 3500);
+}
+
+const nextUnsubmittedUmku = computed(() => {
+  return activeKbliUmkuList.value.find((u) => !isUmkuIssued(u.umku_code)) || null;
+});
+
+watch(
+  () => permitStore.activeWizard.kbli?.kbli_code,
+  () => {
+    activeTrack.value = 'MAIN';
+  }
+);
 
 const reqList = computed(() => {
   const scope = activeScope.value;
