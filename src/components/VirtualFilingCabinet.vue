@@ -160,50 +160,78 @@
 
           <!-- FOLDER CONTENT: NESTED FILES IN DIRECTORY TREE -->
           <div v-show="expandedFolders[folder.key]" class="p-2.5 bg-slate-50/40">
-            <!-- BRANCH 1: CREDENTIALS FOLDER -->
+            <!-- BRANCH 1: CREDENTIALS FOLDER (Persyaratan Dasar & NIB) -->
             <div v-if="folder.key === 'CREDENTIALS'" class="space-y-2 border-l-2 border-emerald-300 ml-3 pl-3">
               <div v-if="filteredCredentials.length === 0" class="py-4 px-2 text-center text-gray-400 text-xs italic">
                 Belum ada Verifiable Credential resmi terbit untuk entitas ini.
               </div>
 
               <div
-                v-for="app in filteredCredentials"
-                :key="app.id"
+                v-for="vc in filteredCredentials"
+                :key="vc.id"
                 class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 text-white rounded-xl p-3 shadow-xs border border-slate-700 relative overflow-hidden"
               >
                 <div class="flex items-center justify-between">
-                  <span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1">
+                  <span
+                    class="text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center space-x-1"
+                    :class="[
+                      vc.category === 'KKPR' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
+                      vc.category === 'LINGKUNGAN' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                      vc.category === 'PBG_SLF' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
+                      'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    ]"
+                  >
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>W3C VC</span>
+                    <span>{{ vc.category === 'PBG_SLF' ? 'PBG / SLF' : vc.category }}</span>
                   </span>
                   <span class="text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
-                    {{ app.verifiableCredential?.credentialType }}
+                    {{ vc.credentialType }}
                   </span>
                 </div>
 
                 <div class="mt-2">
-                  <h4 class="font-bold text-xs text-white line-clamp-1">{{ app.kbliTitle }}</h4>
-                  <p class="text-[10px] text-slate-300">KBLI {{ app.kbliCode }}</p>
+                  <h4 class="font-bold text-xs text-white line-clamp-1">{{ vc.title }}</h4>
+                  <div class="flex items-center space-x-2 text-[10px] text-slate-300 mt-0.5">
+                    <span>KBLI {{ vc.kbliCode }}</span>
+                    <span>•</span>
+                    <span class="text-slate-400 truncate max-w-[150px]">{{ vc.issuerName }}</span>
+                  </div>
 
-                  <div class="mt-1.5 bg-slate-800/80 p-2 rounded-lg text-[9px] font-mono space-y-0.5 border border-slate-700">
-                    <div class="truncate text-emerald-300">ID: {{ app.verifiableCredential?.vcId }}</div>
-                    <div class="text-slate-300">Terbit: {{ formatDate(app.verifiableCredential?.issuedAt) }}</div>
-                    <div class="truncate text-blue-300">Hash: {{ app.verifiableCredential?.proofHash.slice(0, 16) }}...</div>
+                  <!-- Key Claims Highlights -->
+                  <div v-if="vc.claims" class="mt-2 bg-slate-800/80 p-2 rounded-lg text-[9px] font-mono space-y-0.5 border border-slate-700">
+                    <div v-if="vc.claims.nomor_kkpr" class="truncate text-cyan-300">
+                      No: {{ vc.claims.nomor_kkpr }}
+                    </div>
+                    <div v-if="vc.claims.nomor_surat" class="truncate text-emerald-300">
+                      No: {{ vc.claims.nomor_surat }}
+                    </div>
+                    <div v-if="vc.claims.nomor_pbg" class="truncate text-blue-300">
+                      No: {{ vc.claims.nomor_pbg }}
+                    </div>
+                    <div v-if="vc.claims.zona_ruang" class="truncate text-slate-300">
+                      Kawasan: {{ vc.claims.zona_ruang }}
+                    </div>
+                    <div v-if="vc.claims.luas_tanah_m2" class="text-slate-300">
+                      Luas: {{ Number(vc.claims.luas_tanah_m2).toLocaleString('id-ID') }} m²
+                    </div>
+                    <div class="truncate text-emerald-400">ID: {{ vc.id }}</div>
+                    <div class="text-slate-400">Terbit: {{ formatDate(vc.issuedAt) }}</div>
                   </div>
                 </div>
 
                 <div class="mt-2.5 pt-2 border-t border-slate-700 flex items-center justify-between">
                   <button
-                    @click="activeQrVc = app.verifiableCredential"
+                    @click="activeQrVc = { qrCodeData: vc.qrCodeData, title: vc.title, vcId: vc.id }"
                     class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-white rounded border border-slate-600 transition"
                   >
                     QR Check
                   </button>
                   <button
-                    @click="downloadPdf(app)"
-                    class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold text-white rounded shadow transition"
+                    @click="viewCredentialDetail(vc)"
+                    class="px-2 py-1 bg-emerald-600 hover:bg-emerald-500 text-[10px] font-bold text-white rounded shadow transition flex items-center space-x-1"
                   >
-                    Unduh PDF
+                    <span>👁️</span>
+                    <span>Detail VC</span>
                   </button>
                 </div>
               </div>
@@ -838,6 +866,76 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Verifiable Credential Detail Modal -->
+    <Teleport to="body">
+      <div v-if="selectedVcDetail" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto border border-gray-100">
+          <div class="flex items-center justify-between pb-3 border-b">
+            <div class="flex items-center space-x-2">
+              <span class="text-xl">📜</span>
+              <div>
+                <h3 class="text-sm font-bold text-gray-900">{{ selectedVcDetail.title }}</h3>
+                <p class="text-[10px] text-gray-500 font-mono">{{ selectedVcDetail.credentialType }} • W3C Standard</p>
+              </div>
+            </div>
+            <button @click="selectedVcDetail = null" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-gray-200 space-y-2 text-[11px] font-mono">
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-sans">ID Kredensial:</span>
+                <span class="text-emerald-700 font-bold truncate max-w-xs">{{ selectedVcDetail.id }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-sans">Issuer DID:</span>
+                <span class="text-blue-700 font-bold truncate max-w-xs">{{ selectedVcDetail.issuerDid }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-sans">Instansi Penerbit:</span>
+                <span class="text-gray-900 font-sans font-bold">{{ selectedVcDetail.issuerName }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-sans">Tanggal Terbit:</span>
+                <span class="text-gray-700">{{ selectedVcDetail.issuedAt }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-500 font-sans">Status Kredensial:</span>
+                <span class="text-emerald-700 font-bold font-sans">● VALID & AKTIF</span>
+              </div>
+            </div>
+
+            <!-- Subject Claims List -->
+            <div class="space-y-1">
+              <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">Klaim Resmi (Credential Subject):</span>
+              <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl text-[11px] font-mono space-y-1.5 overflow-x-auto">
+                <div v-for="(val, key) in selectedVcDetail.claims" :key="key" class="flex justify-between gap-2 border-b border-slate-800 pb-1">
+                  <span class="text-slate-400">{{ key }}:</span>
+                  <span class="text-emerald-400 font-bold text-right">{{ val }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2">
+              <span class="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1">Bukti Kriptografi (Proof SHA-256 Digest):</span>
+              <span class="text-[10px] text-emerald-800 font-mono break-all bg-emerald-50 p-2 rounded-lg block border border-emerald-200">
+                {{ selectedVcDetail.proofHash }}
+              </span>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t flex justify-end space-x-2">
+            <button
+              @click="selectedVcDetail = null"
+              class="px-4 py-2 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 transition"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -847,18 +945,21 @@ import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore, type BusinessEntity } from '../stores/companyStore';
 import { usePermitStore } from '../stores/permitStore';
 import { useSpatialStore } from '../stores/spatialStore';
+import { useCredentialStore } from '../stores/credentialStore';
 import InteractiveGisStudio from './InteractiveGisStudio.vue';
 
 const vfcStore = useVfcStore();
 const companyStore = useCompanyStore();
 const permitStore = usePermitStore();
 const spatialStore = useSpatialStore();
+const credentialStore = useCredentialStore();
 
 const searchQuery = ref('');
 const showUploadModal = ref(false);
 const showAddCategoryModal = ref(false);
 const previewingDoc = ref<VfcDocument | null>(null);
 const activeQrVc = ref<any>(null);
+const selectedVcDetail = ref<any>(null);
 
 const newCategoryName = ref('');
 const selectedCategoryIcon = ref('📁');
@@ -921,20 +1022,83 @@ const approvedCredentials = computed(() => {
   return permitStore.approvedCredentials;
 });
 
+const modularCredentials = computed(() => {
+  return credentialStore.activeCompanyCredentials;
+});
+
+const allVerifiableCredentials = computed(() => {
+  const list: any[] = [];
+  // 1. Modular Persyaratan Dasar Credentials (KKPR, Lingkungan, PBG & SLF)
+  for (const c of modularCredentials.value) {
+    list.push({
+      id: c.id,
+      isModular: true,
+      category: c.category,
+      title: c.title,
+      kbliCode: c.kbliCode,
+      kbliTitle: c.kbliTitle,
+      credentialType: c.credentialType,
+      issuerDid: c.issuerDid,
+      issuerName: c.issuerName,
+      issuedAt: c.issuedAt,
+      proofHash: c.proofHash,
+      qrCodeData: c.qrCodeData,
+      claims: c.claims
+    });
+  }
+  // 2. Application-level Credentials (NIB / Sertifikat Standar)
+  for (const app of approvedCredentials.value) {
+    if (app.verifiableCredential) {
+      list.push({
+        id: app.verifiableCredential.vcId,
+        isModular: false,
+        category: 'NIB',
+        title: `Verifiable ${app.verifiableCredential.credentialType} (${app.kbliTitle})`,
+        kbliCode: app.kbliCode,
+        kbliTitle: app.kbliTitle,
+        credentialType: app.verifiableCredential.credentialType,
+        issuerDid: app.verifiableCredential.issuer,
+        issuerName: 'Kementerian Investasi / BKPM',
+        issuedAt: app.verifiableCredential.issuedAt,
+        proofHash: app.verifiableCredential.proofHash,
+        qrCodeData: app.verifiableCredential.qrCodeData,
+        claims: {
+          nomor_permohonan: app.id,
+          tingkat_risiko: app.riskLevel,
+          status: 'Disetujui Otomatis'
+        }
+      });
+    }
+  }
+  return list;
+});
+
 const totalFilesCount = computed(() => {
-  return currentCompanyDocs.value.length + approvedCredentials.value.length;
+  return currentCompanyDocs.value.length + allVerifiableCredentials.value.length;
 });
 
 const filteredCredentials = computed(() => {
-  if (!searchQuery.value.trim()) return approvedCredentials.value;
+  if (!searchQuery.value.trim()) return allVerifiableCredentials.value;
   const q = searchQuery.value.toLowerCase();
-  return approvedCredentials.value.filter(
-    (app) =>
-      app.kbliTitle.toLowerCase().includes(q) ||
-      app.kbliCode.toLowerCase().includes(q) ||
-      app.verifiableCredential?.vcId.toLowerCase().includes(q)
+  return allVerifiableCredentials.value.filter(
+    (c) =>
+      c.title.toLowerCase().includes(q) ||
+      c.kbliTitle.toLowerCase().includes(q) ||
+      c.kbliCode.toLowerCase().includes(q) ||
+      c.id.toLowerCase().includes(q) ||
+      c.credentialType.toLowerCase().includes(q)
   );
 });
+
+function viewCredentialDetail(vc: any) {
+  selectedVcDetail.value = vc;
+}
+
+function openFolder(folderKey: string) {
+  expandedFolders[folderKey] = true;
+}
+
+defineExpose({ openFolder });
 
 function getDocsInFolder(categoryKey: string): VfcDocument[] {
   let docs = vfcStore.documentsByCategory(companyStore.activeCompanyId, categoryKey);
@@ -952,7 +1116,7 @@ function getDocsInFolder(categoryKey: string): VfcDocument[] {
 
 function getFolderCount(categoryKey: string): number {
   if (categoryKey === 'CREDENTIALS') {
-    return approvedCredentials.value.length;
+    return allVerifiableCredentials.value.length;
   }
   return vfcStore.documentsByCategory(companyStore.activeCompanyId, categoryKey).length;
 }

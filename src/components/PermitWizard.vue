@@ -1529,6 +1529,8 @@ import { usePermitStore } from '../stores/permitStore';
 import { useVfcStore, type VfcDocument } from '../stores/vfcStore';
 import { useCompanyStore } from '../stores/companyStore';
 import { useSpatialStore, type SpatialParcelAsset } from '../stores/spatialStore';
+import { useCredentialStore } from '../stores/credentialStore';
+import { useNotificationStore } from '../stores/notificationStore';
 import { evaluateStage1KbliRequirements } from '../utils/dmnEngine';
 import InteractiveGisStudio from './InteractiveGisStudio.vue';
 
@@ -1538,6 +1540,8 @@ const permitStore = usePermitStore();
 const vfcStore = useVfcStore();
 const companyStore = useCompanyStore();
 const spatialStore = useSpatialStore();
+const credentialStore = useCredentialStore();
+const notificationStore = useNotificationStore();
 
 const showPreCommitModal = ref(false);
 const showVfcParcelSelectorModal = ref(false);
@@ -1588,7 +1592,70 @@ async function handleSavePhase(phaseNumber: number) {
   }, 3000);
 }
 
-function handleLanjut(fromStep: number, toStep: number) {
+async function handleLanjut(fromStep: number, toStep: number) {
+  // If moving past Tahap 2 (KKPR)
+  if (fromStep === 2 && toStep === 3) {
+    await credentialStore.issueCredential({
+      category: 'KKPR',
+      title: `Verifiable KKPR (Tata Ruang: ${permitStore.activeWizard.formData.alamat_usaha || 'Sentul'})`,
+      kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01285',
+      kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+      credentialType: isKkprAutomatic.value ? 'VerifiableKonfirmasiKKPR' : 'VerifiablePersetujuanKKPR',
+      issuerDid: 'did:oss:atr-bpn:gov:id',
+      issuerName: 'Kementerian ATR/BPN',
+      claims: {
+        nomor_kkpr: permitStore.activeWizard.formData.nomor_pkkpr || `056000000002-${Date.now().toString().slice(-4)}`,
+        status_kesesuaian: isKkprAutomatic.value ? 'Konfirmasi Otomatis (RDTR Sesuai)' : 'Persetujuan PKKPR Valid',
+        luas_tanah_m2: permitStore.activeWizard.formData.luas_tanah,
+        kdb_maksimum: `${permitStore.activeWizard.formData.koefisien_dasar_bangunan}%`,
+        klb_maksimum: `${permitStore.activeWizard.formData.koefisien_lantai_bangunan}`,
+        lokasi: permitStore.activeWizard.formData.alamat_usaha,
+        kawasan: permitStore.activeWizard.formData.nama_kawasan
+      }
+    });
+  }
+
+  // If moving past Tahap 3 (Lingkungan)
+  if (fromStep === 3 && toStep === 4) {
+    await credentialStore.issueCredential({
+      category: 'LINGKUNGAN',
+      title: `Verifiable ${requiredEnvironmentalDocType.value.toUpperCase()} (Persetujuan Lingkungan)`,
+      kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01285',
+      kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+      credentialType: requiredEnvironmentalDocType.value === 'sppl' ? 'VerifiableSPPL' : 'VerifiablePKPLH',
+      issuerDid: 'did:oss:klhk:gov:id',
+      issuerName: 'Kementerian Lingkungan Hidup dan Kehutanan',
+      claims: {
+        jenis_dokumen: requiredEnvironmentalDocType.value.toUpperCase(),
+        nomor_persetujuan: `PL-2026-${Date.now().toString().slice(-6)}`,
+        uraian_usaha: permitStore.activeWizard.formData.uraian_usaha_lingkungan,
+        status_lingkungan: 'Persetujuan Lingkungan Sah & Terverifikasi DLH'
+      }
+    });
+  }
+
+  // If moving past Tahap 4 (PBG & SLF)
+  if (fromStep === 4 && toStep === 5) {
+    await credentialStore.issueCredential({
+      category: 'PBG_SLF',
+      title: permitStore.activeWizard.formData.memerlukan_bangunan === 'Y'
+        ? `Verifiable PBG (${permitStore.activeWizard.formData.namaBangunan})`
+        : 'Verifiable Pembebasan Bangunan (Bypass PBG)',
+      kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01285',
+      kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+      credentialType: 'VerifiablePBG',
+      issuerDid: 'did:oss:pupr:gov:id',
+      issuerName: 'Kementerian PUPR (SIMBG)',
+      claims: {
+        nomor_pbg: `PBG-PUPR-2026-${Date.now().toString().slice(-6)}`,
+        nama_bangunan: permitStore.activeWizard.formData.namaBangunan,
+        luas_lantai_m2: permitStore.activeWizard.formData.luasTotalBangunan,
+        jumlah_lantai: permitStore.activeWizard.formData.jumlahLantai,
+        status_keselamatan: 'Standar Teknis Arsitektur & Struktur Disetujui'
+      }
+    });
+  }
+
   openAccordions[fromStep] = false;
   openAccordions[toStep] = true;
   permitStore.setWizardStep(toStep);
@@ -1847,9 +1914,25 @@ async function onInlineUpload(e: Event, category: string, defaultTitle: string) 
   target.value = '';
 }
 
-function handleConfirmSubmit() {
+async function handleConfirmSubmit() {
   showPreCommitModal.value = false;
-  permitStore.submitApplication();
+  const app = await permitStore.submitApplication();
   permitStore.setWizardStep(6);
+  if (app && app.verifiableCredential) {
+    await notificationStore.addNotification({
+      type: 'CREDENTIAL_ISSUED',
+      title: `Verifiable Credential Terbit: ${app.verifiableCredential.credentialType}`,
+      message: `Permohonan Izin KBLI ${app.kbliCode} (${app.kbliTitle}) telah disetujui dan disegel dengan SHA-256. Dokumen resmi telah disimpan di VFC Credentials.`,
+      actionLabel: 'Buka di Folder VFC',
+      actionType: 'VIEW_CREDENTIAL',
+      metadata: {
+        credentialId: app.verifiableCredential.vcId,
+        credentialType: app.verifiableCredential.credentialType,
+        authorityName: 'Kementerian Investasi / BKPM',
+        kbliCode: app.kbliCode,
+        folderKey: 'CREDENTIALS'
+      }
+    });
+  }
 }
 </script>

@@ -1,5 +1,11 @@
 <template>
   <div class="min-h-screen bg-slate-100 text-gray-900 flex flex-col font-sans">
+    <!-- Floating Dismissable Flash Cards for Real-Time Alerts -->
+    <NotificationFlashCards
+      @switch-tab="activeTab = $event"
+      @open-vfc-folder="handleOpenVfcFolder"
+    />
+
     <!-- Top Header -->
     <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40">
       <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -149,11 +155,19 @@
           <div v-else-if="activeTab === 'wizard'">
             <PermitWizard @switch-tab="activeTab = $event" />
           </div>
+
+          <!-- WORKSPACE VIEW 4: INBOX & NOTIFICATIONS -->
+          <div v-else-if="activeTab === 'inbox'">
+            <InboxTab
+              @switch-tab="activeTab = $event"
+              @open-vfc-folder="handleOpenVfcFolder"
+            />
+          </div>
         </div>
 
         <!-- RIGHT COLUMN: Virtual Filing Cabinet Island (Desktop) -->
         <div class="hidden lg:block lg:col-span-5 xl:col-span-4 sticky top-[130px]">
-          <VirtualFilingCabinet />
+          <VirtualFilingCabinet ref="vfcRef" />
         </div>
       </div>
     </main>
@@ -173,7 +187,7 @@
             </button>
           </div>
           <div class="flex-1 overflow-hidden">
-            <VirtualFilingCabinet />
+            <VirtualFilingCabinet ref="vfcMobileRef" />
           </div>
         </div>
       </div>
@@ -182,28 +196,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useCompanyStore } from './stores/companyStore';
 import { useVfcStore } from './stores/vfcStore';
 import { usePermitStore, type KbliItem } from './stores/permitStore';
+import { useNotificationStore } from './stores/notificationStore';
+import { useCredentialStore } from './stores/credentialStore';
 
 import CompanySwitcher from './components/CompanySwitcher.vue';
 import VirtualFilingCabinet from './components/VirtualFilingCabinet.vue';
 import KbliSearch from './components/KbliSearch.vue';
 import PermitWizard from './components/PermitWizard.vue';
 import SlaTracker from './components/SlaTracker.vue';
+import NotificationFlashCards from './components/NotificationFlashCards.vue';
+import InboxTab from './components/InboxTab.vue';
 
 const companyStore = useCompanyStore();
 const vfcStore = useVfcStore();
 const permitStore = usePermitStore();
+const notificationStore = useNotificationStore();
+const credentialStore = useCredentialStore();
 
-const activeTab = ref<'dashboard' | 'kbli' | 'wizard'>('dashboard');
+const activeTab = ref<'dashboard' | 'kbli' | 'wizard' | 'inbox'>('dashboard');
 const showMobileVfc = ref(false);
+const vfcRef = ref<any>(null);
+const vfcMobileRef = ref<any>(null);
+
+onMounted(async () => {
+  await companyStore.init();
+  await vfcStore.init();
+  await permitStore.init();
+  await credentialStore.init();
+  await notificationStore.init();
+});
+
+function handleOpenVfcFolder(folderKey: string) {
+  vfcRef.value?.openFolder?.(folderKey);
+  vfcMobileRef.value?.openFolder?.(folderKey);
+}
 
 const tabs = computed(() => [
   { id: 'dashboard' as const, label: 'Home', icon: '🏠', badge: activeApplications.value.length },
   { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
-  { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' }
+  { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' },
+  { id: 'inbox' as const, label: 'Kotak Masuk', icon: '📬', badge: notificationStore.unreadCount }
 ]);
 
 const activeApplications = computed(() => permitStore.activeApplications);
