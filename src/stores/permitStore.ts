@@ -302,7 +302,7 @@ export const usePermitStore = defineStore('permitStore', {
         } else if (!this.activeWizard.kbli) {
           const defaultKbli = this.catalog.find((k) => k.kbli_code === '01285');
           if (defaultKbli) {
-            this.startNewApplication(defaultKbli, defaultKbli.scopes[0]);
+            this.startWizardForKbli(defaultKbli, defaultKbli.scopes[0]);
           }
         }
       } catch (err) {
