@@ -139,6 +139,44 @@ export const usePermitStore = defineStore('permitStore', {
           proofHash: 'a9b8c7d6e5f43210123456789abcdef0123456789abcdef0123456789abcdef0',
           qrCodeData: 'https://oss.go.id/verify/vc-bkpm-2026-46324-00192'
         }
+      },
+      {
+        id: 'PERMIT-2026-003',
+        companyId: 'COMP-001',
+        companyName: 'PT Nusantara Pratama Enterprise',
+        kbliCode: '01286',
+        kbliTitle: 'Pertanian Tanaman Obat atau Biofarmaka Non Rimpang',
+        scopeSequence: 'B',
+        scopeTitle: 'Produksi Benih Kina, Adas Pinang dan Gambir',
+        riskCode: 'MR',
+        riskLevel: 'Menengah Rendah',
+        authority: 'Gubernur / Dinas Pertanian Provinsi',
+        processingTime: 'Otomatis',
+        status: 'APPROVED' as const,
+        stepIndex: 4,
+        submittedAt: '2026-09-25 10:30',
+        approvedAt: '2026-09-25 10:32',
+        payloadDigest: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b',
+        attachedVfcDocIds: ['VFC-DOC-001', 'VFC-DOC-003'],
+        formData: {
+          projectName: 'Operasi Perbenihan Tanaman Obat Non Rimpang Sentul',
+          investmentAmount: 3200000000,
+          locationAddress: 'Kawasan Industri Sentul Kavling 14, Desa Sentul',
+          province: 'Jawa Barat',
+          regency: 'Kab. Bogor',
+          landAreaSqMetres: 2000,
+          laborCount: 20,
+          machineryDetails: 'Laboratorium Uji Mutu Benih, Green House 800 m2',
+          notes: 'Izin Utama (Sertifikat Standar) Terbit - Memerlukan Pemenuhan PB-UMKU'
+        },
+        verifiableCredential: {
+          vcId: 'urn:uuid:vc-bkpm-2026-01286-00388',
+          issuedAt: '2026-09-25T10:32:00Z',
+          issuer: 'did:oss:bkpm:gov:id',
+          credentialType: 'VerifiableSertifikatStandar',
+          proofHash: '9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b',
+          qrCodeData: 'https://oss.go.id/verify/vc-bkpm-2026-01286-00388'
+        }
       }
     ] as PermitApplication[],
 
@@ -283,6 +321,13 @@ export const usePermitStore = defineStore('permitStore', {
       try {
         const storedApps = await idbGetAll<PermitApplication>(STORES.PERMITS);
         if (storedApps && storedApps.length > 0) {
+          if (!storedApps.some((a) => a.id === 'PERMIT-2026-003')) {
+            const sample003 = this.applications.find((a) => a.id === 'PERMIT-2026-003');
+            if (sample003) {
+              storedApps.push(sample003);
+              await idbPut(STORES.PERMITS, sample003);
+            }
+          }
           this.applications = storedApps;
         } else {
           for (const app of this.applications) {

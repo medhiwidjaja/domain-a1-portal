@@ -141,6 +141,7 @@
                   v-for="app in activeApplications"
                   :key="app.id"
                   :application="app"
+                  @apply-umku="handleApplyUmkuFromDashboard"
                 />
               </div>
             </div>
@@ -275,6 +276,28 @@ function onSelectKbliForWizard(payload: { kbli: KbliItem; scope?: any } | KbliIt
     scope = maybeScope;
   }
   permitStore.startWizardForKbli(kbli, scope);
+  activeTab.value = 'wizard';
+}
+
+function handleApplyUmkuFromDashboard(payload: { application: any; umku: any }) {
+  const kbli = permitStore.catalog.find((k) => k.kbli_code === payload.application.kbliCode);
+  if (kbli) {
+    const scope =
+      kbli.scopes?.find((s: any) => s.sequence === payload.application.scopeSequence) ||
+      kbli.scopes?.find((s: any) => Array.isArray(s.pb_umku) && s.pb_umku.some((u: any) => u.umku_code === payload.umku.umku_code)) ||
+      kbli.scopes?.[0];
+
+    permitStore.startWizardForKbli(kbli, scope);
+
+    // If main permit was approved, retain step 6
+    if (payload.application.status === 'APPROVED' || payload.application.stepIndex >= 4) {
+      permitStore.activeWizard.step = 6;
+    }
+
+    // Set activeTrack to the specific UMKU code
+    permitStore.activeWizard.activeTrack = payload.umku.umku_code;
+    permitStore.persistDraft();
+  }
   activeTab.value = 'wizard';
 }
 </script>
