@@ -335,27 +335,33 @@
                 :key="umku.umku_code || uIdx"
                 class="bg-white border border-amber-200 rounded-lg p-3.5 shadow-2xs space-y-2.5"
               >
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pb-2 border-b border-amber-100">
-                  <div>
-                    <div class="flex items-center space-x-2">
-                      <span class="text-xs font-bold text-gray-900">{{ umku.title }}</span>
-                      <span class="text-[10px] font-mono bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-bold">
-                        {{ umku.umku_code }}
-                      </span>
-                    </div>
-                    <p v-if="umku.description" class="text-[11px] text-gray-600 mt-0.5">
-                      {{ umku.description }}
-                    </p>
+                <div class="space-y-1.5 pb-2.5 border-b border-amber-100">
+                  <!-- Line 1: UMKU code and title -->
+                  <div class="flex items-center space-x-2">
+                    <span class="text-[10px] font-mono bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded font-bold">
+                      {{ umku.umku_code }}
+                    </span>
+                    <h5 class="text-xs font-bold text-gray-900">{{ umku.title }}</h5>
                   </div>
-                  <div class="flex flex-wrap items-center gap-1.5 shrink-0">
-                    <span class="text-[10px] bg-blue-50 text-blue-800 px-2 py-0.5 rounded font-semibold border border-blue-100">
-                      {{ umku.authority }}
+
+                  <!-- Line 2: Description -->
+                  <p v-if="umku.description" class="text-[11px] text-gray-600 leading-relaxed">
+                    {{ umku.description }}
+                  </p>
+
+                  <!-- Line 3: The badges (authority, SLA, cost) -->
+                  <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span class="text-[10px] bg-blue-50 text-blue-800 px-2.5 py-0.5 rounded-md font-semibold border border-blue-200 flex items-center space-x-1">
+                      <span class="text-blue-500">🏛️ Kewenangan:</span>
+                      <span class="font-bold">{{ umku.authority }}</span>
                     </span>
-                    <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded font-semibold border border-emerald-100">
-                      SLA: {{ umku.processing_time }}
+                    <span class="text-[10px] bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-md font-semibold border border-emerald-200 flex items-center space-x-1">
+                      <span class="text-emerald-500">⏱️ SLA:</span>
+                      <span class="font-bold">{{ umku.processing_time }}</span>
                     </span>
-                    <span v-if="umku.pnbp_fee" class="text-[10px] bg-purple-50 text-purple-800 px-2 py-0.5 rounded font-semibold border border-purple-100">
-                      {{ umku.pnbp_fee }}
+                    <span v-if="umku.pnbp_fee" class="text-[10px] bg-purple-50 text-purple-800 px-2.5 py-0.5 rounded-md font-semibold border border-purple-200 flex items-center space-x-1">
+                      <span class="text-purple-500">💰 Biaya:</span>
+                      <span class="font-bold">{{ umku.pnbp_fee }}</span>
                     </span>
                   </div>
                 </div>
