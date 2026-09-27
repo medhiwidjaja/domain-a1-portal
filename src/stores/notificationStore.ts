@@ -18,13 +18,18 @@ export interface NotificationItem {
   read: boolean;
   dismissedFromFlash: boolean;
   actionLabel?: string;
-  actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'REVISE_DOC' | 'OPEN_TAB';
+  actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'UPLOAD_PAYMENT_PROOF' | 'REVISE_DOC' | 'OPEN_TAB';
   metadata?: {
     credentialId?: string;
     credentialType?: string;
     billingCode?: string;
     amount?: number;
     paymentStatus?: 'UNPAID' | 'PAID';
+    proofFileName?: string;
+    ntpn?: string;
+    bankName?: string;
+    paymentNotes?: string;
+    vfcDocId?: string;
     revisionTargetDoc?: string;
     revisionNote?: string;
     authorityName?: string;
@@ -63,18 +68,19 @@ export const useNotificationStore = defineStore('notificationStore', {
         companyId: 'COMP-001',
         type: 'PNBP_BILLING' as NotificationType,
         title: 'Surat Perintah Setor: Tagihan PNBP Simponi (Rp 7.500.000)',
-        message: 'Kementerian ATR/BPN telah menerbitkan kode billing Simponi untuk penilaian teknis PKKPR. Harap lakukan pembayaran dalam 3 hari kerja untuk melanjutkan proses evaluasi.',
+        message: 'Kementerian ATR/BPN telah menerbitkan Surat Perintah Setor (Kode Billing Simponi: 8202609012399). Sistem OSS tidak memproses pembayaran secara online. Harap lakukan pembayaran melalui teller bank, ATM, atau internet banking persepsi, kemudian unggah bukti pembayaran (bukti setor) untuk melanjutkan proses evaluasi. Berkas bukti pembayaran akan disimpan secara aman di Virtual Filing Cabinet.',
         timestamp: '2026-09-26 14:30',
         read: false,
         dismissedFromFlash: false,
-        actionLabel: 'Bayar PNBP Sekarang',
-        actionType: 'PAY_PNBP',
+        actionLabel: 'Unggah Bukti Bayar',
+        actionType: 'UPLOAD_PAYMENT_PROOF',
         metadata: {
           billingCode: '8202609012399',
           amount: 7500000,
           paymentStatus: 'UNPAID',
           authorityName: 'Kementerian ATR/BPN (Simponi Kemenkeu)',
-          kbliCode: '03111'
+          kbliCode: '03111',
+          folderKey: 'PEMBAYARAN'
         }
       },
       {
@@ -127,7 +133,21 @@ export const useNotificationStore = defineStore('notificationStore', {
       try {
         const stored = await getAppState<NotificationItem[]>('user_notifications');
         if (stored && stored.length > 0) {
-          this.notifications = stored;
+          this.notifications = stored.map((n) => {
+            if (n.id === 'NOTIF-2026-002' && n.metadata?.paymentStatus !== 'PAID') {
+              return {
+                ...n,
+                message: 'Kementerian ATR/BPN telah menerbitkan Surat Perintah Setor (Kode Billing Simponi: 8202609012399). Sistem OSS tidak memproses pembayaran secara online. Harap lakukan pembayaran melalui teller bank, ATM, atau internet banking persepsi, kemudian unggah bukti pembayaran (bukti setor) untuk melanjutkan proses evaluasi. Berkas bukti pembayaran akan disimpan secara aman di Virtual Filing Cabinet.',
+                actionLabel: 'Unggah Bukti Bayar',
+                actionType: 'UPLOAD_PAYMENT_PROOF' as const,
+                metadata: {
+                  ...n.metadata,
+                  folderKey: 'PEMBAYARAN'
+                }
+              };
+            }
+            return n;
+          });
         } else {
           await setAppState('user_notifications', this.notifications);
         }
@@ -217,27 +237,53 @@ export const useNotificationStore = defineStore('notificationStore', {
       await this.persist();
     },
 
-    async payPnbp(notifId: string) {
+    async uploadPaymentProof(
+      notifId: string,
+      proofData: {
+        fileName: string;
+        fileSize?: string;
+        bankName?: string;
+        ntpn?: string;
+        notes?: string;
+        vfcDocId?: string;
+      }
+    ) {
       const notif = this.notifications.find((n) => n.id === notifId);
       if (!notif || !notif.metadata) return;
 
       notif.metadata.paymentStatus = 'PAID';
+      notif.metadata.proofFileName = proofData.fileName;
+      if (proofData.bankName) notif.metadata.bankName = proofData.bankName;
+      if (proofData.ntpn) notif.metadata.ntpn = proofData.ntpn;
+      if (proofData.notes) notif.metadata.paymentNotes = proofData.notes;
+      if (proofData.vfcDocId) notif.metadata.vfcDocId = proofData.vfcDocId;
       notif.read = true;
       notif.dismissedFromFlash = true;
 
       // Create settlement confirmation notification
       await this.addNotification({
         type: 'INFO',
-        title: `✅ Pembayaran PNBP Berhasil: ${notif.metadata.billingCode}`,
-        message: `Setoran PNBP sebesar Rp ${Number(notif.metadata.amount || 0).toLocaleString('id-ID')} telah dikonfirmasi oleh Kas Negara (Simponi). Evaluasi teknis otomatis dilanjutkan.`,
-        actionLabel: 'Lihat Status Perizinan',
+        title: `✅ Bukti Pembayaran Disimpan ke Filing Cabinet: ${notif.metadata.billingCode}`,
+        message: `Bukti setoran PNBP/Retribusi untuk kode billing ${notif.metadata.billingCode} (${proofData.fileName}) berhasil diunggah dan disimpan ke Virtual Filing Cabinet (Folder Pembayaran). Berkas telah diteruskan ke instansi verifikator (${notif.metadata.authorityName}) untuk konfirmasi teknis.`,
+        actionLabel: 'Buka di Folder VFC',
         actionType: 'OPEN_TAB',
         metadata: {
+          folderKey: 'PEMBAYARAN',
           targetTab: 'dashboard'
         }
       });
 
       await this.persist();
+    },
+
+    async payPnbp(notifId: string) {
+      const notif = this.notifications.find((n) => n.id === notifId);
+      const code = notif?.metadata?.billingCode || '82026';
+      await this.uploadPaymentProof(notifId, {
+        fileName: `bukti_setor_simponi_${code}.pdf`,
+        bankName: 'Bank Mandiri (Kas Negara)',
+        ntpn: `NTPN${Date.now().toString().slice(-8)}`
+      });
     },
 
     async submitRevision(notifId: string, revisionNote: string) {
@@ -270,14 +316,15 @@ export const useNotificationStore = defineStore('notificationStore', {
       await this.addNotification({
         type: 'PNBP_BILLING',
         title: `Surat Perintah Setor: Tagihan PNBP Simponi (Rp 5.000.000)`,
-        message: `Kementerian ATR/BPN menerbitkan Surat Perintah Setor PNBP Simponi dengan kode billing ${billingCode}. Harap disetorkan sebelum tanggal jatuh tempo.`,
-        actionLabel: 'Bayar PNBP Sekarang',
-        actionType: 'PAY_PNBP',
+        message: `Kementerian ATR/BPN menerbitkan Surat Perintah Setor PNBP Simponi dengan kode billing ${billingCode}. Sistem OSS tidak memproses pembayaran secara online. Silakan lakukan pembayaran melalui bank persepsi (teller/ATM/m-banking) dan unggah bukti pembayaran (bukti setor). Berkas bukti pembayaran akan otomatis disimpan pada Virtual Filing Cabinet.`,
+        actionLabel: 'Unggah Bukti Bayar',
+        actionType: 'UPLOAD_PAYMENT_PROOF',
         metadata: {
           billingCode,
           amount: 5000000,
           paymentStatus: 'UNPAID',
-          authorityName: 'Kementerian ATR/BPN'
+          authorityName: 'Kementerian ATR/BPN',
+          folderKey: 'PEMBAYARAN'
         }
       });
     },

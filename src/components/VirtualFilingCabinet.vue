@@ -981,6 +981,7 @@ const expandedFolders = reactive<Record<string, boolean>>({
   LOKASI: true,
   LINGKUNGAN: false,
   PENGAJUAN: true,
+  PEMBAYARAN: true,
   CREDENTIALS: true
 });
 
@@ -996,6 +997,7 @@ const standardFolders: FolderNode[] = [
   { key: 'LOKASI', label: 'Lokasi', icon: '🗺️', isCustom: false },
   { key: 'LINGKUNGAN', label: 'Lingkungan', icon: '🌱', isCustom: false },
   { key: 'PENGAJUAN', label: 'Pengajuan', icon: '📄', isCustom: false },
+  { key: 'PEMBAYARAN', label: 'Pembayaran', icon: '💳', isCustom: false },
   { key: 'CREDENTIALS', label: 'Credentials', icon: '📜', isCustom: false }
 ];
 
@@ -1009,12 +1011,23 @@ const allFolders = computed<FolderNode[]>(() => {
   return [...standardFolders, ...custom];
 });
 
+function isFolderExpanded(folderKey: string): boolean {
+  if (expandedFolders[folderKey] === undefined) {
+    expandedFolders[folderKey] = true;
+  }
+  return !!expandedFolders[folderKey];
+}
+
 const allExpanded = computed(() => {
-  return allFolders.value.every((f) => expandedFolders[f.key]);
+  return allFolders.value.every((f) => isFolderExpanded(f.key));
 });
 
 function toggleFolder(folderKey: string) {
-  expandedFolders[folderKey] = !expandedFolders[folderKey];
+  if (expandedFolders[folderKey] === undefined) {
+    expandedFolders[folderKey] = false;
+  } else {
+    expandedFolders[folderKey] = !expandedFolders[folderKey];
+  }
 }
 
 function toggleAllFolders() {

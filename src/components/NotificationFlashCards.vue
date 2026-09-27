@@ -97,11 +97,11 @@
             <button
               v-if="card.type === 'PNBP_BILLING'"
               type="button"
-              @click="handlePayPnbp(card.id)"
+              @click="handlePayPnbp(card)"
               class="px-3 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] rounded-lg shadow transition flex items-center space-x-1"
             >
-              <span>💳</span>
-              <span>Bayar PNBP</span>
+              <span>📤</span>
+              <span>Unggah Bukti Bayar</span>
             </button>
 
             <button
@@ -152,8 +152,10 @@ function dismiss(id: string) {
   notificationStore.dismissFlash(id);
 }
 
-async function handlePayPnbp(id: string) {
-  await notificationStore.payPnbp(id);
+function handlePayPnbp(card: NotificationItem) {
+  notificationStore.dismissFlash(card.id);
+  notificationStore.markAsRead(card.id);
+  emit('switch-tab', 'inbox');
 }
 
 function handleViewVfc(card: NotificationItem) {

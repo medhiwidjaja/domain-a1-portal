@@ -189,6 +189,27 @@ export const useVfcStore = defineStore('vfcStore', {
       return newCategory;
     },
 
+    async ensureUmkuCategory(label: string, umkuCode?: string) {
+      const sanitizedKey = umkuCode
+        ? `UMKU_${umkuCode.toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
+        : `UMKU_${label.toUpperCase().replace(/[^A-Z0-9]/g, '_').slice(0, 30)}`;
+
+      const existing = this.customCategories.find(
+        (c) => c.key === sanitizedKey || c.label.toLowerCase() === label.toLowerCase()
+      );
+      if (existing) return existing;
+
+      const newCategory: VfcCustomCategory = {
+        key: sanitizedKey,
+        label,
+        icon: '📋',
+        createdAt: new Date().toISOString()
+      };
+      this.customCategories.push(newCategory);
+      await idbPut(STORES.VFC_CATEGORIES, newCategory);
+      return newCategory;
+    },
+
     async removeCustomCategory(key: string) {
       this.customCategories = this.customCategories.filter((c) => c.key !== key);
       await idbDelete(STORES.VFC_CATEGORIES, key);

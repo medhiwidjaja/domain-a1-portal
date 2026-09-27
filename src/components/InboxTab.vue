@@ -214,7 +214,7 @@
             <!-- Specific Interactive Box: PNBP Billing -->
             <div
               v-if="item.type === 'PNBP_BILLING' && item.metadata"
-              class="bg-amber-50/80 border border-amber-200 rounded-xl p-3 mt-2 space-y-2 text-xs"
+              class="bg-amber-50/80 border border-amber-200 rounded-xl p-3 mt-2 space-y-2.5 text-xs"
             >
               <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px]">
                 <div>
@@ -229,23 +229,54 @@
                 </div>
               </div>
 
-              <div class="flex items-center justify-between pt-2 border-t border-amber-200/60">
-                <span
-                  class="font-mono text-[10px] px-2 py-0.5 rounded font-bold"
-                  :class="item.metadata.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-200 text-amber-900'"
-                >
-                  {{ item.metadata.paymentStatus === 'PAID' ? '✅ LUNAS (TERVERIFIKASI KAS NEGARA)' : '⏳ MENUNGGU PEMBAYARAN' }}
-                </span>
+              <!-- Offline Payment Policy Notice -->
+              <div class="p-2.5 bg-amber-100/70 border border-amber-300/80 rounded-lg text-[11px] text-amber-950 flex items-start space-x-2">
+                <span class="text-base shrink-0">🏛️</span>
+                <div class="space-y-0.5">
+                  <p class="font-bold text-amber-900">Tidak Tersedia Proses Pembayaran Online di Portal OSS</p>
+                  <p class="text-amber-800 text-[10px] leading-relaxed">
+                    Sesuai ketentuan, silakan lakukan pembayaran melalui Teller Bank Persepsi, ATM, atau Internet Banking menggunakan <strong>Kode Billing Simponi</strong> di atas. Setelah melakukan pembayaran, Anda wajib mengunggah <strong>bukti pembayaran (bukti setor)</strong> untuk melanjutkan proses verifikasi. Berkas bukti pembayaran akan disimpan secara aman di <strong>Virtual Filing Cabinet</strong>.
+                  </p>
+                </div>
+              </div>
 
-                <button
-                  v-if="item.metadata.paymentStatus !== 'PAID'"
-                  type="button"
-                  @click="notificationStore.payPnbp(item.id)"
-                  class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1"
-                >
-                  <span>💳</span>
-                  <span>Bayar Sekarang (Simulasi)</span>
-                </button>
+              <!-- Paid vs Unpaid Status & Action Row -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-amber-200/60">
+                <div>
+                  <span
+                    class="font-mono text-[10px] px-2 py-0.5 rounded font-bold inline-block"
+                    :class="item.metadata.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-200 text-amber-900 border border-amber-300'"
+                  >
+                    {{ item.metadata.paymentStatus === 'PAID' ? '✅ LUNAS & BUKTI BAYAR TERSIMPAN DI FILING CABINET' : '⏳ MENUNGGU PEMBAYARAN & UNGGAH BUKTI SETOR' }}
+                  </span>
+                  <div v-if="item.metadata.paymentStatus === 'PAID'" class="text-[10px] text-gray-600 font-mono mt-1 space-x-2">
+                    <span v-if="item.metadata.proofFileName">📁 {{ item.metadata.proofFileName }}</span>
+                    <span v-if="item.metadata.bankName">• {{ item.metadata.bankName }}</span>
+                    <span v-if="item.metadata.ntpn">• NTPN: {{ item.metadata.ntpn }}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center space-x-2">
+                  <button
+                    v-if="item.metadata.paymentStatus !== 'PAID'"
+                    type="button"
+                    @click="openPaymentProofModal(item)"
+                    class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5"
+                  >
+                    <span>📤</span>
+                    <span>Unggah Bukti Bayar</span>
+                  </button>
+
+                  <button
+                    v-else
+                    type="button"
+                    @click="openPaymentInVfc"
+                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5"
+                  >
+                    <span>📁</span>
+                    <span>Buka Folder Pembayaran VFC →</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -384,6 +415,105 @@
         </div>
       </div>
     </Teleport>
+
+    <!-- Modal: Unggah Bukti Pembayaran (Bukti Setor PNBP / Retribusi) -->
+    <Teleport to="body">
+      <div v-if="activePaymentProofNotif" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b">
+            <div class="flex items-center space-x-2 text-amber-700">
+              <span class="text-xl">💳</span>
+              <h3 class="text-sm font-bold text-gray-900">Unggah Bukti Pembayaran (Bukti Setor)</h3>
+            </div>
+            <button @click="activePaymentProofNotif = null" class="text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-amber-900 text-[11px] space-y-1">
+              <div>Kode Billing Simponi: <strong class="font-mono text-gray-900">{{ activePaymentProofNotif.metadata?.billingCode }}</strong></div>
+              <div>Instansi Penerima: <strong>{{ activePaymentProofNotif.metadata?.authorityName }}</strong></div>
+              <div>Nominal Pembayaran: <strong class="text-amber-950 font-bold">Rp {{ Number(activePaymentProofNotif.metadata?.amount || 0).toLocaleString('id-ID') }}</strong></div>
+            </div>
+
+            <div class="bg-blue-50/80 p-3 rounded-xl border border-blue-200 text-blue-900 text-[11px] flex items-start space-x-2">
+              <span class="text-base shrink-0">🏛️</span>
+              <div>
+                <p class="font-bold">Ketentuan & Alur Pembayaran</p>
+                <p class="text-[10px] text-blue-800 mt-0.5 leading-relaxed">
+                  Tidak tersedia fasilitas pembayaran online di dalam sistem OSS. Silakan bayar melalui Teller Bank Persepsi, ATM, atau Mobile Banking, lalu lampirkan bukti pembayaran di bawah ini. Dokumen bukti pembayaran ini akan disimpan secara otomatis ke dalam <strong>Virtual Filing Cabinet (Folder Pembayaran)</strong>.
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Bank / Saluran Pembayaran</label>
+              <select
+                v-model="paymentBank"
+                class="w-full border border-gray-300 rounded-xl p-2.5 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden bg-white"
+              >
+                <option value="Bank Mandiri (Kas Negara Simponi)">Bank Mandiri (Kas Negara Simponi)</option>
+                <option value="Bank BRI (Kas Negara Simponi)">Bank BRI (Kas Negara Simponi)</option>
+                <option value="Bank BNI (Kas Negara Simponi)">Bank BNI (Kas Negara Simponi)</option>
+                <option value="Bank BCA (Penerimaan Negara)">Bank BCA (Penerimaan Negara)</option>
+                <option value="Bank BJB (Kas Daerah / SIMBG)">Bank BJB (Kas Daerah / SIMBG)</option>
+                <option value="PT Pos Indonesia (Kantor Pos)">PT Pos Indonesia (Kantor Pos)</option>
+                <option value="Teller Kas Negara / Lainnya">Teller Kas Negara / Lainnya</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Nomor Transaksi Bank / NTPN (Nomor Transaksi Kas Negara)</label>
+              <input
+                v-model="paymentNtpn"
+                type="text"
+                placeholder="Contoh: NTPN-82026194819"
+                class="w-full border border-gray-300 rounded-xl p-2.5 text-xs font-mono focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+              />
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Pilih File Bukti Pembayaran / Struk Setor (PDF / JPG / PNG)</label>
+              <input
+                type="file"
+                @change="onPaymentFileSelected"
+                class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer"
+              />
+              <p v-if="paymentProofFileName" class="text-[11px] text-gray-600 mt-1 font-mono">
+                📁 File terpilih: <span class="font-bold text-gray-800">{{ paymentProofFileName }}</span>
+              </p>
+            </div>
+
+            <div>
+              <label class="block font-semibold text-gray-700 mb-1">Catatan Setoran Pembayaran (Opsional)</label>
+              <textarea
+                v-model="paymentNotes"
+                rows="2"
+                placeholder="Keterangan transaksi pembayaran kas negara..."
+                class="w-full border border-gray-300 rounded-xl p-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-hidden"
+              ></textarea>
+            </div>
+          </div>
+
+          <div class="flex justify-end space-x-2 pt-3 border-t">
+            <button
+              type="button"
+              @click="activePaymentProofNotif = null"
+              class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-xl"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              @click="submitPaymentProof"
+              class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow transition flex items-center space-x-1.5"
+            >
+              <span>💾</span>
+              <span>Simpan & Simpan ke Filing Cabinet</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -404,6 +534,21 @@ const activeRevisionNotif = ref<NotificationItem | null>(null);
 const revisionText = ref('');
 const revisionSelectedFile = ref<File | null>(null);
 const revisionFileName = ref('');
+
+const activePaymentProofNotif = ref<NotificationItem | null>(null);
+const paymentBank = ref('Bank Mandiri (Kas Negara Simponi)');
+const paymentNtpn = ref('');
+const paymentProofFile = ref<File | null>(null);
+const paymentProofFileName = ref('');
+const paymentNotes = ref('');
+
+function onPaymentFileSelected(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    paymentProofFile.value = target.files[0];
+    paymentProofFileName.value = target.files[0].name;
+  }
+}
 
 function onRevisionFileSelected(e: Event) {
   const target = e.target as HTMLInputElement;
@@ -477,5 +622,62 @@ function openCredentialInVfc(notif: NotificationItem) {
   notificationStore.markAsRead(notif.id);
   emit('switch-tab', 'dashboard');
   emit('open-vfc-folder', 'CREDENTIALS');
+}
+
+function openPaymentProofModal(notif: NotificationItem) {
+  activePaymentProofNotif.value = notif;
+  paymentBank.value = 'Bank Mandiri (Kas Negara Simponi)';
+  paymentNtpn.value = `NTPN${Math.floor(10000000 + Math.random() * 90000000)}`;
+  paymentProofFile.value = null;
+  paymentProofFileName.value = '';
+  paymentNotes.value = 'Setoran PNBP lunas melalui teller/ATM bank persepsi.';
+}
+
+async function submitPaymentProof() {
+  if (!activePaymentProofNotif.value) return;
+  const notif = activePaymentProofNotif.value;
+
+  let fileName = paymentProofFileName.value;
+  let fileSize = '1.2 MB';
+
+  if (paymentProofFile.value) {
+    const file = paymentProofFile.value;
+    fileName = file.name;
+    fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+    if (fileSize === '0.0 MB') fileSize = '520 KB';
+  } else if (!fileName) {
+    fileName = `bukti_setor_pnbp_${notif.metadata?.billingCode || 'simponi'}.pdf`;
+  }
+
+  // 1. Store the proof document directly in Virtual Filing Cabinet (Folder PEMBAYARAN)
+  const newDoc = await vfcStore.addDocument({
+    companyId: notif.companyId || companyStore.activeCompanyId,
+    category: 'PEMBAYARAN',
+    title: `Bukti Pembayaran PNBP / Retribusi: ${notif.metadata?.billingCode || ''}`,
+    fileName: fileName,
+    fileSize: fileSize,
+    url: '#'
+  });
+
+  // 2. Update notification store & emit settlement notification
+  await notificationStore.uploadPaymentProof(notif.id, {
+    fileName: fileName,
+    fileSize: fileSize,
+    bankName: paymentBank.value,
+    ntpn: paymentNtpn.value || `NTPN${Math.floor(10000000 + Math.random() * 90000000)}`,
+    notes: paymentNotes.value,
+    vfcDocId: newDoc.id
+  });
+
+  activePaymentProofNotif.value = null;
+  paymentProofFile.value = null;
+  paymentProofFileName.value = '';
+  paymentNotes.value = '';
+  paymentNtpn.value = '';
+}
+
+function openPaymentInVfc() {
+  emit('switch-tab', 'dashboard');
+  emit('open-vfc-folder', 'PEMBAYARAN');
 }
 </script>

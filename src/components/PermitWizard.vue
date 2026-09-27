@@ -1582,20 +1582,39 @@
               <div
                 v-for="(req, rIdx) in selectedPbUmku.requirements"
                 :key="rIdx"
-                class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs"
+                class="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-2 transition"
+                :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'"
               >
-                <div class="flex items-center space-x-2">
-                  <span class="text-amber-600 font-bold">•</span>
-                  <span class="text-gray-800">{{ req }}</span>
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-2">
+                    <span :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'text-emerald-600' : 'text-amber-600'" class="font-bold">•</span>
+                    <span class="text-gray-800 font-medium">{{ req }}</span>
+                  </div>
+                  <label class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 rounded text-[11px] font-semibold cursor-pointer transition flex items-center space-x-1 shrink-0 shadow-2xs">
+                    <span>📤</span>
+                    <span>{{ getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'Ganti File' : '+ Unggah ke VFC' }}</span>
+                    <input
+                      type="file"
+                      class="hidden"
+                      @change="onUmkuUpload($event, selectedPbUmku, req)"
+                    />
+                  </label>
                 </div>
-                <label class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold cursor-pointer transition">
-                  <span>+ Unggah ke VFC</span>
-                  <input
-                    type="file"
-                    class="hidden"
-                    @change="onInlineUpload($event, 'TEKNIS', req)"
-                  />
-                </label>
+
+                <!-- Bound Doc Preview in Preparation Mode -->
+                <div
+                  v-if="getBoundDoc(selectedPbUmku.umku_code, req)"
+                  class="flex items-center justify-between p-2 bg-emerald-50 border border-emerald-200 rounded-lg text-[11px] text-emerald-900"
+                >
+                  <div class="flex items-center space-x-2 truncate">
+                    <span>✅</span>
+                    <span class="font-bold truncate">{{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileName }}</span>
+                    <span class="text-emerald-700 text-[10px] font-mono">({{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileSize }})</span>
+                  </div>
+                  <span class="text-[9px] bg-emerald-200 text-emerald-900 font-bold px-1.5 py-0.2 rounded font-mono shrink-0">
+                    Tersimpan di VFC: {{ selectedPbUmku.title }}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1710,20 +1729,25 @@
                 </span>
               </div>
 
-              <div class="space-y-2">
+              <div class="space-y-2.5">
                 <div
                   v-for="(req, rIdx) in selectedPbUmku.requirements"
                   :key="rIdx"
-                  class="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2"
+                  class="p-3.5 bg-slate-50 border rounded-xl space-y-2.5 transition"
+                  :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'"
                 >
                   <div class="flex items-center justify-between text-xs">
-                    <span class="font-bold text-gray-800">• {{ req }}</span>
-                    <label class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 rounded text-[11px] font-semibold cursor-pointer transition">
-                      <span>+ Upload File</span>
+                    <span class="font-bold text-gray-800 flex items-center space-x-1.5">
+                      <span :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'text-emerald-600' : 'text-amber-600'">•</span>
+                      <span>{{ req }}</span>
+                    </span>
+                    <label class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 rounded-lg text-[11px] font-semibold cursor-pointer transition flex items-center space-x-1 shadow-2xs">
+                      <span>📤</span>
+                      <span>{{ getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'Ganti / Upload Baru' : '+ Upload File' }}</span>
                       <input
                         type="file"
                         class="hidden"
-                        @change="onInlineUpload($event, 'TEKNIS', req)"
+                        @change="onUmkuUpload($event, selectedPbUmku, req)"
                       />
                     </label>
                   </div>
@@ -1731,8 +1755,10 @@
                   <!-- Select from existing VFC docs -->
                   <div class="flex items-center space-x-2 text-xs">
                     <select
-                      @change="onSelectExistingDoc($event, 'TEKNIS')"
-                      class="flex-1 p-2 bg-white border border-gray-300 rounded-lg text-xs"
+                      :value="getUmkuRequirementDocId(selectedPbUmku.umku_code, req)"
+                      @change="onUmkuSelectDoc($event, selectedPbUmku.umku_code, req)"
+                      class="flex-1 p-2 bg-white border rounded-lg text-xs transition"
+                      :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950 font-medium' : 'border-gray-300 text-gray-700'"
                     >
                       <option value="">-- Pilih Dokumen dari VFC Vault --</option>
                       <option
@@ -1743,6 +1769,21 @@
                         {{ d.title }} ({{ d.category }} - {{ d.fileSize }})
                       </option>
                     </select>
+                  </div>
+
+                  <!-- Bound Document Info Badge -->
+                  <div
+                    v-if="getBoundDoc(selectedPbUmku.umku_code, req)"
+                    class="flex items-center justify-between p-2 bg-emerald-50/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900"
+                  >
+                    <div class="flex items-center space-x-2 truncate">
+                      <span class="text-xs">📁</span>
+                      <span class="font-bold truncate">{{ getBoundDoc(selectedPbUmku.umku_code, req)?.title }}</span>
+                      <span class="text-emerald-700 text-[10px] font-mono shrink-0">({{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileName }} • {{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileSize }})</span>
+                    </div>
+                    <span class="text-[9px] bg-emerald-200/90 text-emerald-900 font-bold px-2 py-0.5 rounded font-mono shrink-0">
+                      Tersimpan di VFC: {{ selectedPbUmku.title }}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2284,6 +2325,7 @@ const umkuFormData = reactive<Record<string, {
   technicalDescription: string;
   testingLocation: string;
   selectedDocIds: string[];
+  requirementDocs?: Record<string, string>;
   declarationAgreed: boolean;
 }>>({});
 
@@ -2308,11 +2350,88 @@ function getUmkuForm(umkuCode: string) {
       varietyName: 'Varietas Rimpang & Biofarmaka Sentul Unggul V1',
       technicalDescription: 'Pengujian kebaruan dan kemurnian genetik varietas lokal dengan stabilitas hasil panen 12.5 ton/ha dan resistensi hama teruji.',
       testingLocation: 'Stasiun Riset Agronomi Sentul & Balai Penelitian Tanaman Rempah dan Obat (Balittro)',
-      selectedDocIds: ['VFC-DOC-001'],
+      selectedDocIds: [],
+      requirementDocs: {},
       declarationAgreed: true
     };
   }
+  if (!umkuFormData[umkuCode].requirementDocs) {
+    umkuFormData[umkuCode].requirementDocs = {};
+  }
   return umkuFormData[umkuCode];
+}
+
+function getUmkuRequirementDocId(umkuCode: string, req: string): string {
+  const form = getUmkuForm(umkuCode);
+  return form.requirementDocs?.[req] || '';
+}
+
+function getBoundDoc(umkuCode: string, req: string): VfcDocument | undefined {
+  const docId = getUmkuRequirementDocId(umkuCode, req);
+  if (!docId) return undefined;
+  return currentCompanyDocs.value.find((d) => d.id === docId);
+}
+
+function onUmkuSelectDoc(e: Event, umkuCode: string, req: string) {
+  const target = e.target as HTMLSelectElement;
+  const docId = target.value;
+  const form = getUmkuForm(umkuCode);
+  if (!form.requirementDocs) form.requirementDocs = {};
+
+  if (docId) {
+    form.requirementDocs[req] = docId;
+    if (!form.selectedDocIds.includes(docId)) {
+      form.selectedDocIds.push(docId);
+    }
+    if (!permitStore.activeWizard.selectedVfcDocIds.includes(docId)) {
+      permitStore.activeWizard.selectedVfcDocIds.push(docId);
+    }
+  } else {
+    delete form.requirementDocs[req];
+    form.selectedDocIds = Object.values(form.requirementDocs);
+  }
+  triggerAutoSave();
+}
+
+async function onUmkuUpload(e: Event, umku: any, req: string) {
+  const target = e.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+  const file = target.files[0];
+  const fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+
+  // 1. Ensure folder in VFC exists under the specific UMKU's name
+  const umkuCategory = await vfcStore.ensureUmkuCategory(umku.title, umku.umku_code);
+
+  // 2. Store the file in VFC under the specific UMKU folder with descriptive title
+  const newDoc = await vfcStore.addDocument({
+    companyId: companyStore.activeCompanyId,
+    category: umkuCategory.key,
+    title: `${umku.title} - ${req}`,
+    fileName: file.name,
+    fileSize: fileSize === '0.0 MB' ? '850 KB' : fileSize,
+    url: '#'
+  });
+
+  // 3. Update the field so that the user doesn't have to choose again from the dropdown list
+  const form = getUmkuForm(umku.umku_code);
+  if (!form.requirementDocs) form.requirementDocs = {};
+  form.requirementDocs[req] = newDoc.id;
+
+  if (!form.selectedDocIds.includes(newDoc.id)) {
+    form.selectedDocIds.push(newDoc.id);
+  }
+  if (!permitStore.activeWizard.selectedVfcDocIds.includes(newDoc.id)) {
+    permitStore.activeWizard.selectedVfcDocIds.push(newDoc.id);
+  }
+
+  permitStore.activeWizard.umkuFormData = JSON.parse(JSON.stringify(umkuFormData));
+  await permitStore.persistDraft();
+  target.value = '';
+
+  saveToastMessage.value = `Berkas "${file.name}" berhasil diunggah ke folder "${umku.title}" dan otomatis ditautkan!`;
+  setTimeout(() => {
+    saveToastMessage.value = null;
+  }, 3500);
 }
 
 // Automatic Debounced Persistence for all Wizard Inputs
