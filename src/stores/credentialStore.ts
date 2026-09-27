@@ -216,6 +216,14 @@ export const useCredentialStore = defineStore('credentialStore', {
       });
 
       return newCred;
+    },
+
+    async revokeCredential(id: string) {
+      const cred = this.credentials.find((c) => c.id === id);
+      if (cred) {
+        cred.status = 'REVOKED';
+        await this.persist();
+      }
     }
   }
 });

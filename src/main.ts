@@ -6,6 +6,8 @@ import { useCompanyStore } from './stores/companyStore';
 import { useVfcStore } from './stores/vfcStore';
 import { useSpatialStore } from './stores/spatialStore';
 import { usePermitStore } from './stores/permitStore';
+import { useCredentialStore } from './stores/credentialStore';
+import { useNotificationStore } from './stores/notificationStore';
 
 const app = createApp(App);
 const pinia = createPinia();
@@ -16,12 +18,16 @@ const companyStore = useCompanyStore();
 const vfcStore = useVfcStore();
 const spatialStore = useSpatialStore();
 const permitStore = usePermitStore();
+const credentialStore = useCredentialStore();
+const notificationStore = useNotificationStore();
 
 Promise.all([
   companyStore.init(),
   vfcStore.init(),
   spatialStore.init(),
-  permitStore.init()
+  permitStore.init(),
+  credentialStore.init(),
+  notificationStore.init()
 ]).catch((err) => {
   console.warn('Stores IDB initialization warning:', err);
 });

@@ -356,8 +356,12 @@
               <label class="block font-semibold text-gray-700 mb-1">Pilih File Baru (PDF / GeoJSON)</label>
               <input
                 type="file"
+                @change="onRevisionFileSelected"
                 class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-100 file:text-orange-800 hover:file:bg-orange-200 cursor-pointer"
               />
+              <p v-if="revisionFileName" class="text-[11px] text-gray-600 mt-1 font-mono">
+                📁 File terpilih: <span class="font-bold text-gray-800">{{ revisionFileName }}</span>
+              </p>
             </div>
           </div>
 
@@ -386,14 +390,28 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useNotificationStore, type NotificationItem } from '../stores/notificationStore';
+import { useVfcStore } from '../stores/vfcStore';
+import { useCompanyStore } from '../stores/companyStore';
 
 const emit = defineEmits(['switch-tab', 'open-vfc-folder']);
 const notificationStore = useNotificationStore();
+const vfcStore = useVfcStore();
+const companyStore = useCompanyStore();
 
 const showSimulator = ref(false);
 const activeFilter = ref<'ALL' | 'CREDENTIAL' | 'PNBP' | 'REVISION' | 'UNREAD'>('ALL');
 const activeRevisionNotif = ref<NotificationItem | null>(null);
 const revisionText = ref('');
+const revisionSelectedFile = ref<File | null>(null);
+const revisionFileName = ref('');
+
+function onRevisionFileSelected(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (target.files && target.files.length > 0) {
+    revisionSelectedFile.value = target.files[0];
+    revisionFileName.value = target.files[0].name;
+  }
+}
 
 const allNotifications = computed(() => notificationStore.activeCompanyNotifications);
 const unreadCount = computed(() => notificationStore.unreadCount);
@@ -427,13 +445,32 @@ function markAllAsRead() {
 function openRevisionModal(notif: NotificationItem) {
   activeRevisionNotif.value = notif;
   revisionText.value = 'Dokumen teknis telah disesuaikan dengan rekomendasi hasil telaah.';
+  revisionSelectedFile.value = null;
+  revisionFileName.value = '';
 }
 
 async function submitRevisionFile() {
   if (!activeRevisionNotif.value) return;
-  await notificationStore.submitRevision(activeRevisionNotif.value.id, revisionText.value);
+  const notif = activeRevisionNotif.value;
+
+  if (revisionSelectedFile.value) {
+    const file = revisionSelectedFile.value;
+    const fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+    await vfcStore.addDocument({
+      companyId: notif.companyId || companyStore.activeCompanyId,
+      category: notif.metadata?.folderKey || 'LINGKUNGAN',
+      title: `Berkas Revisi: ${notif.metadata?.revisionTargetDoc || 'Dokumen Teknis'}`,
+      fileName: file.name,
+      fileSize: fileSize === '0.0 MB' ? '1.2 MB' : fileSize,
+      url: '#'
+    });
+  }
+
+  await notificationStore.submitRevision(notif.id, revisionText.value);
   activeRevisionNotif.value = null;
   revisionText.value = '';
+  revisionSelectedFile.value = null;
+  revisionFileName.value = '';
 }
 
 function openCredentialInVfc(notif: NotificationItem) {

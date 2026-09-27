@@ -2055,14 +2055,28 @@ const notificationStore = useNotificationStore();
 const showPreCommitModal = ref(false);
 const showVfcParcelSelectorModal = ref(false);
 
-// Accordion expansion state for Steps 1 through 5
+// Accordion expansion state for Steps 1 through 5 (hydrated from store if present)
 const openAccordions = reactive<Record<number, boolean>>({
-  1: true,
-  2: permitStore.activeWizard.step === 2,
-  3: permitStore.activeWizard.step === 3,
-  4: permitStore.activeWizard.step === 4,
-  5: permitStore.activeWizard.step === 5
+  1: permitStore.activeWizard.openAccordions?.[1] ?? (permitStore.activeWizard.step === 1),
+  2: permitStore.activeWizard.openAccordions?.[2] ?? (permitStore.activeWizard.step === 2),
+  3: permitStore.activeWizard.openAccordions?.[3] ?? (permitStore.activeWizard.step === 3),
+  4: permitStore.activeWizard.openAccordions?.[4] ?? (permitStore.activeWizard.step === 4),
+  5: permitStore.activeWizard.openAccordions?.[5] ?? (permitStore.activeWizard.step === 5)
 });
+
+watch(
+  () => permitStore.activeWizard.openAccordions,
+  (stored) => {
+    if (stored) {
+      for (const k of [1, 2, 3, 4, 5]) {
+        if (stored[k] !== undefined) {
+          openAccordions[k] = stored[k];
+        }
+      }
+    }
+  },
+  { deep: true }
+);
 
 watch(
   () => permitStore.activeWizard.step,
@@ -2200,7 +2214,16 @@ const activeScopeReq = computed(() => {
 });
 
 // Multi-Track Permitting State (Section 4 TO-BE Spec)
-const activeTrack = ref<'MAIN' | string>('MAIN');
+const activeTrack = ref<'MAIN' | string>(permitStore.activeWizard.activeTrack || 'MAIN');
+
+watch(
+  () => permitStore.activeWizard.activeTrack,
+  (val) => {
+    if (val && val !== activeTrack.value) {
+      activeTrack.value = val;
+    }
+  }
+);
 
 const activeKbliUmkuList = computed(() => {
   const scope = activeScope.value;
@@ -2264,9 +2287,24 @@ const umkuFormData = reactive<Record<string, {
   declarationAgreed: boolean;
 }>>({});
 
+if (permitStore.activeWizard.umkuFormData) {
+  Object.assign(umkuFormData, JSON.parse(JSON.stringify(permitStore.activeWizard.umkuFormData)));
+}
+
+watch(
+  () => permitStore.activeWizard.umkuFormData,
+  (saved) => {
+    if (saved && Object.keys(saved).length > 0) {
+      Object.assign(umkuFormData, JSON.parse(JSON.stringify(saved)));
+    }
+  },
+  { deep: true }
+);
+
 function getUmkuForm(umkuCode: string) {
   if (!umkuFormData[umkuCode]) {
-    umkuFormData[umkuCode] = {
+    const saved = permitStore.activeWizard.umkuFormData?.[umkuCode];
+    umkuFormData[umkuCode] = saved || {
       varietyName: 'Varietas Rimpang & Biofarmaka Sentul Unggul V1',
       technicalDescription: 'Pengujian kebaruan dan kemurnian genetik varietas lokal dengan stabilitas hasil panen 12.5 ton/ha dan resistensi hama teruji.',
       testingLocation: 'Stasiun Riset Agronomi Sentul & Balai Penelitian Tanaman Rempah dan Obat (Balittro)',
@@ -2276,6 +2314,24 @@ function getUmkuForm(umkuCode: string) {
   }
   return umkuFormData[umkuCode];
 }
+
+// Automatic Debounced Persistence for all Wizard Inputs
+let autoSaveTimer: ReturnType<typeof setTimeout> | null = null;
+function triggerAutoSave() {
+  if (!permitStore.isHydrated) return;
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(() => {
+    permitStore.activeWizard.activeTrack = activeTrack.value;
+    permitStore.activeWizard.openAccordions = { ...openAccordions };
+    permitStore.activeWizard.umkuFormData = JSON.parse(JSON.stringify(umkuFormData));
+    permitStore.persistDraft();
+  }, 250);
+}
+
+watch(() => permitStore.activeWizard.formData, triggerAutoSave, { deep: true });
+watch(openAccordions, triggerAutoSave, { deep: true });
+watch(activeTrack, triggerAutoSave);
+watch(umkuFormData, triggerAutoSave, { deep: true });
 
 const isSubmittingUmku = ref(false);
 
@@ -2308,6 +2364,9 @@ async function handleUmkuSubmit(umku: any) {
       dokumen_pendukung_vfc: form.selectedDocIds.length
     }
   });
+
+  permitStore.activeWizard.umkuFormData = JSON.parse(JSON.stringify(umkuFormData));
+  await permitStore.persistDraft();
 
   isSubmittingUmku.value = false;
   saveToastMessage.value = `Permohonan PB-UMKU "${umku.title}" berhasil diterbitkan!`;
@@ -2548,6 +2607,15 @@ async function onInlineUpload(e: Event, category: string, defaultTitle: string) 
     permitStore.activeWizard.selectedVfcDocIds.push(newDoc.id);
   }
 
+  if (activeTrack.value !== 'MAIN') {
+    const form = getUmkuForm(activeTrack.value);
+    if (!form.selectedDocIds.includes(newDoc.id)) {
+      form.selectedDocIds.push(newDoc.id);
+    }
+    permitStore.activeWizard.umkuFormData = JSON.parse(JSON.stringify(umkuFormData));
+  }
+
+  await permitStore.persistDraft();
   target.value = '';
 }
 

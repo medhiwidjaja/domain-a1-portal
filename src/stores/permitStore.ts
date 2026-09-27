@@ -232,7 +232,10 @@ export const usePermitStore = defineStore('permitStore', {
           { lat: -6.54250, lng: 106.86480 }
         ] as Array<{ lat: number; lng: number }>
       },
-      selectedVfcDocIds: [] as string[]
+      selectedVfcDocIds: [] as string[],
+      activeTrack: 'MAIN' as string,
+      openAccordions: { 1: true, 2: false, 3: false, 4: false, 5: false } as Record<number, boolean>,
+      umkuFormData: {} as Record<string, any>
     }
   }),
 
@@ -298,7 +301,23 @@ export const usePermitStore = defineStore('permitStore', {
               }
             }
           }
-          this.activeWizard = savedDraft;
+          this.activeWizard = {
+            ...this.activeWizard,
+            ...savedDraft,
+            formData: {
+              ...this.activeWizard.formData,
+              ...(savedDraft.formData || {})
+            },
+            openAccordions: savedDraft.openAccordions || {
+              1: savedDraft.step === 1,
+              2: savedDraft.step === 2,
+              3: savedDraft.step === 3,
+              4: savedDraft.step === 4,
+              5: savedDraft.step === 5
+            },
+            umkuFormData: savedDraft.umkuFormData || {},
+            activeTrack: savedDraft.activeTrack || 'MAIN'
+          };
         } else if (!this.activeWizard.kbli) {
           const defaultKbli = this.catalog.find((k) => k.kbli_code === '01285');
           if (defaultKbli) {
@@ -377,6 +396,9 @@ export const usePermitStore = defineStore('permitStore', {
       this.activeWizard.kbli = kbli;
       this.activeWizard.selectedScope = chosenScope;
       this.activeWizard.step = 1;
+      this.activeWizard.activeTrack = 'MAIN';
+      this.activeWizard.openAccordions = { 1: true, 2: false, 3: false, 4: false, 5: false };
+      this.activeWizard.umkuFormData = {};
 
       const riskCode = chosenScope?.licensing_requirements?.[0]?.risk_code || kbli.risk_code;
       const isLow = riskCode === 'R' || riskCode === 'RE' || riskCode === 'MR';
@@ -576,8 +598,35 @@ export const usePermitStore = defineStore('permitStore', {
       this.applications.unshift(newApp);
       await idbPut(STORES.PERMITS, newApp);
       this.activeWizard.step = 6;
-      await setAppState('active_wizard_draft', null);
+      await this.persistDraft();
       return newApp;
+    },
+
+    async updateApplication(app: PermitApplication) {
+      const idx = this.applications.findIndex((a) => a.id === app.id);
+      if (idx !== -1) {
+        this.applications[idx] = { ...app };
+        await idbPut(STORES.PERMITS, this.applications[idx]);
+      }
+    },
+
+    async updateApplicationStatus(id: string, status: PermitApplication['status'], stepIndex?: number) {
+      const app = this.applications.find((a) => a.id === id);
+      if (app) {
+        app.status = status;
+        if (stepIndex !== undefined) app.stepIndex = stepIndex;
+        if (status === 'APPROVED' && !app.approvedAt) {
+          app.approvedAt = new Date().toISOString().replace('T', ' ').slice(0, 16);
+        }
+        await idbPut(STORES.PERMITS, app);
+      }
+    },
+
+    async resetWizard() {
+      const defaultKbli = this.catalog.find((k) => k.kbli_code === '01285');
+      if (defaultKbli) {
+        this.startWizardForKbli(defaultKbli, defaultKbli.scopes[0]);
+      }
     }
   }
 });

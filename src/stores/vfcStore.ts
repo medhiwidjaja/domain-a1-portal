@@ -192,6 +192,11 @@ export const useVfcStore = defineStore('vfcStore', {
     async removeCustomCategory(key: string) {
       this.customCategories = this.customCategories.filter((c) => c.key !== key);
       await idbDelete(STORES.VFC_CATEGORIES, key);
+    },
+
+    async removeDocument(id: string) {
+      this.documents = this.documents.filter((d) => d.id !== id);
+      await idbDelete(STORES.VFC_DOCS, id);
     }
   }
 });

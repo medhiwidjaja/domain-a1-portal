@@ -196,12 +196,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useCompanyStore } from './stores/companyStore';
 import { useVfcStore } from './stores/vfcStore';
 import { usePermitStore, type KbliItem } from './stores/permitStore';
 import { useNotificationStore } from './stores/notificationStore';
 import { useCredentialStore } from './stores/credentialStore';
+import { getAppState, setAppState } from './utils/idbStorage';
 
 import CompanySwitcher from './components/CompanySwitcher.vue';
 import VirtualFilingCabinet from './components/VirtualFilingCabinet.vue';
@@ -228,6 +229,15 @@ onMounted(async () => {
   await permitStore.init();
   await credentialStore.init();
   await notificationStore.init();
+
+  const savedTab = await getAppState<'dashboard' | 'kbli' | 'wizard' | 'inbox'>('current_active_tab');
+  if (savedTab && ['dashboard', 'kbli', 'wizard', 'inbox'].includes(savedTab)) {
+    activeTab.value = savedTab;
+  }
+});
+
+watch(activeTab, async (newTab) => {
+  await setAppState('current_active_tab', newTab);
 });
 
 function handleOpenVfcFolder(folderKey: string) {
