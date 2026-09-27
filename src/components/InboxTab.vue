@@ -245,11 +245,19 @@
                 <div>
                   <span
                     class="font-mono text-[10px] px-2 py-0.5 rounded font-bold inline-block"
-                    :class="item.metadata.paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-200 text-amber-900 border border-amber-300'"
+                    :class="item.metadata.paymentStatus === 'PAID'
+                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      : item.metadata.paymentStatus === 'PROOF_UPLOADED'
+                      ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                      : 'bg-amber-200 text-amber-900 border border-amber-300'"
                   >
-                    {{ item.metadata.paymentStatus === 'PAID' ? '✅ LUNAS & BUKTI BAYAR TERSIMPAN DI FILING CABINET' : '⏳ MENUNGGU PEMBAYARAN & UNGGAH BUKTI SETOR' }}
+                    {{ item.metadata.paymentStatus === 'PAID'
+                      ? '✅ LUNAS & BUKTI BAYAR TERSIMPAN DI FILING CABINET'
+                      : item.metadata.paymentStatus === 'PROOF_UPLOADED'
+                      ? '⏳ BUKTI TERUNGGAH (MENUNGGU VERIFIKASI INSTANSI)'
+                      : '⏳ MENUNGGU PEMBAYARAN & UNGGAH BUKTI SETOR' }}
                   </span>
-                  <div v-if="item.metadata.paymentStatus === 'PAID'" class="text-[10px] text-gray-600 font-mono mt-1 space-x-2">
+                  <div v-if="item.metadata.paymentStatus === 'PAID' || item.metadata.paymentStatus === 'PROOF_UPLOADED'" class="text-[10px] text-gray-600 font-mono mt-1 space-x-2">
                     <span v-if="item.metadata.proofFileName">📁 {{ item.metadata.proofFileName }}</span>
                     <span v-if="item.metadata.bankName">• {{ item.metadata.bankName }}</span>
                     <span v-if="item.metadata.ntpn">• NTPN: {{ item.metadata.ntpn }}</span>
@@ -257,11 +265,29 @@
                 </div>
 
                 <div class="flex items-center space-x-2">
+                  <template v-if="item.metadata.paymentStatus === 'PROOF_UPLOADED'">
+                    <button
+                      type="button"
+                      @click="handleVerifyPayment(item)"
+                      class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <span>⚡</span>
+                      <span>Verifikasi Pembayaran (Simulasi)</span>
+                    </button>
+                    <button
+                      type="button"
+                      @click="openPaymentProofModal(item)"
+                      class="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-xs rounded-lg transition"
+                    >
+                      Ganti Bukti
+                    </button>
+                  </template>
+
                   <button
-                    v-if="item.metadata.paymentStatus !== 'PAID'"
+                    v-else-if="item.metadata.paymentStatus === 'UNPAID'"
                     type="button"
                     @click="openPaymentProofModal(item)"
-                    class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5"
+                    class="px-4 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5 cursor-pointer"
                   >
                     <span>📤</span>
                     <span>Unggah Bukti Bayar</span>
@@ -271,7 +297,7 @@
                     v-else
                     type="button"
                     @click="openPaymentInVfc"
-                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5"
+                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1.5 cursor-pointer"
                   >
                     <span>📁</span>
                     <span>Buka Folder Pembayaran VFC →</span>
@@ -679,5 +705,9 @@ async function submitPaymentProof() {
 function openPaymentInVfc() {
   emit('switch-tab', 'dashboard');
   emit('open-vfc-folder', 'PEMBAYARAN');
+}
+
+async function handleVerifyPayment(notif: NotificationItem) {
+  await notificationStore.verifyPayment(notif.id);
 }
 </script>

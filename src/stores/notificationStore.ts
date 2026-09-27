@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { useCompanyStore } from './companyStore';
+import { useCredentialStore } from './credentialStore';
 import { getAppState, setAppState } from '../utils/idbStorage';
 
 export type NotificationType =
@@ -18,13 +19,13 @@ export interface NotificationItem {
   read: boolean;
   dismissedFromFlash: boolean;
   actionLabel?: string;
-  actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'UPLOAD_PAYMENT_PROOF' | 'REVISE_DOC' | 'OPEN_TAB';
+  actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'UPLOAD_PAYMENT_PROOF' | 'VERIFY_PAYMENT' | 'REVISE_DOC' | 'OPEN_TAB';
   metadata?: {
     credentialId?: string;
     credentialType?: string;
     billingCode?: string;
     amount?: number;
-    paymentStatus?: 'UNPAID' | 'PAID';
+    paymentStatus?: 'UNPAID' | 'PROOF_UPLOADED' | 'PAID';
     proofFileName?: string;
     ntpn?: string;
     bankName?: string;
@@ -171,7 +172,7 @@ export const useNotificationStore = defineStore('notificationStore', {
       title: string;
       message: string;
       actionLabel?: string;
-      actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'REVISE_DOC' | 'OPEN_TAB';
+      actionType?: 'VIEW_CREDENTIAL' | 'PAY_PNBP' | 'UPLOAD_PAYMENT_PROOF' | 'VERIFY_PAYMENT' | 'REVISE_DOC' | 'OPEN_TAB';
       metadata?: Record<string, any>;
       companyId?: string;
     }) {
@@ -251,24 +252,105 @@ export const useNotificationStore = defineStore('notificationStore', {
       const notif = this.notifications.find((n) => n.id === notifId);
       if (!notif || !notif.metadata) return;
 
-      notif.metadata.paymentStatus = 'PAID';
+      notif.metadata.paymentStatus = 'PROOF_UPLOADED';
       notif.metadata.proofFileName = proofData.fileName;
       if (proofData.bankName) notif.metadata.bankName = proofData.bankName;
       if (proofData.ntpn) notif.metadata.ntpn = proofData.ntpn;
       if (proofData.notes) notif.metadata.paymentNotes = proofData.notes;
       if (proofData.vfcDocId) notif.metadata.vfcDocId = proofData.vfcDocId;
-      notif.read = true;
-      notif.dismissedFromFlash = true;
+      notif.actionLabel = 'Verifikasi Pembayaran';
+      notif.actionType = 'VERIFY_PAYMENT';
+      notif.read = false;
+      notif.dismissedFromFlash = false;
 
       // Create settlement confirmation notification
       await this.addNotification({
         type: 'INFO',
-        title: `✅ Bukti Pembayaran Disimpan ke Filing Cabinet: ${notif.metadata.billingCode}`,
-        message: `Bukti setoran PNBP/Retribusi untuk kode billing ${notif.metadata.billingCode} (${proofData.fileName}) berhasil diunggah dan disimpan ke Virtual Filing Cabinet (Folder Pembayaran). Berkas telah diteruskan ke instansi verifikator (${notif.metadata.authorityName}) untuk konfirmasi teknis.`,
+        title: `📤 Bukti Pembayaran Diunggah ke VFC: ${notif.metadata.billingCode}`,
+        message: `Bukti setoran PNBP/Retribusi untuk kode billing ${notif.metadata.billingCode} (${proofData.fileName}) berhasil disimpan ke folder Pembayaran di VFC. Menunggu verifikasi rekonsiliasi kas negara / instansi pembina (${notif.metadata.authorityName}) sebelum penerbitan izin resmi.`,
         actionLabel: 'Buka di Folder VFC',
         actionType: 'OPEN_TAB',
         metadata: {
           folderKey: 'PEMBAYARAN',
+          targetTab: 'dashboard'
+        }
+      });
+
+      await this.persist();
+    },
+
+    async verifyPayment(notifId: string) {
+      const notif = this.notifications.find((n) => n.id === notifId);
+      if (!notif || !notif.metadata) return;
+
+      notif.metadata.paymentStatus = 'PAID';
+      notif.metadata.verifiedAt = new Date().toISOString();
+      notif.actionLabel = 'Lihat Bukti di VFC';
+      notif.actionType = 'OPEN_TAB';
+      notif.read = true;
+      notif.dismissedFromFlash = true;
+
+      // Dynamic credential issuance upon verified payment
+      const credentialStore = useCredentialStore();
+
+      // If PB-UMKU:
+      if (notif.metadata.umkuCode) {
+        const existing = credentialStore.activeCompanyCredentials.find(
+          (c) => c.claims?.umku_code === notif.metadata?.umkuCode
+        );
+        if (!existing) {
+          await credentialStore.issueCredential({
+            category: 'PB_UMKU',
+            title: `Verifiable PB-UMKU: ${notif.metadata.umkuTitle || notif.metadata.umkuCode}`,
+            kbliCode: notif.metadata.kbliCode || '01286',
+            kbliTitle: notif.metadata.kbliTitle || 'Kegiatan Usaha',
+            credentialType: 'VerifiableUMKU',
+            issuerDid: notif.metadata.authorityName?.includes('PVTPP')
+              ? 'did:oss:kementan:pvtpp:gov:id'
+              : 'did:oss:kementan:perkebunan:gov:id',
+            issuerName: notif.metadata.authorityName || 'Kementerian Pertanian',
+            claims: {
+              umku_code: notif.metadata.umkuCode,
+              nomor_izin_umku: `UMKU-${Date.now().toString().slice(-6)}/KEMTAN/2026`,
+              nama_varietas: notif.metadata.varietyName || 'Varietas Unggul Terverifikasi',
+              instansi_pembina: notif.metadata.authorityName,
+              pnbp_status: `Lunas Terverifikasi SIMPONI (NTPN: ${notif.metadata.ntpn || 'NTPN-SIMPONI-OK'})`,
+              status_izin: 'AKTIF & BERLAKU NASIONAL',
+              dokumen_pendukung_vfc: 1
+            }
+          });
+        }
+      } else if (notif.metadata.targetCategory === 'LINGKUNGAN' || notif.title.toLowerCase().includes('lingkungan')) {
+        const existing = credentialStore.activeCompanyCredentials.find(
+          (c) => c.category === 'LINGKUNGAN'
+        );
+        if (!existing) {
+          await credentialStore.issueCredential({
+            category: 'LINGKUNGAN',
+            title: 'Verifiable PKPLH (Persetujuan Teknis Lingkungan Hidup)',
+            kbliCode: notif.metadata.kbliCode || '01285',
+            kbliTitle: notif.metadata.kbliTitle || 'Kegiatan Usaha',
+            credentialType: 'VerifiablePKPLH',
+            issuerDid: 'did:oss:klhk:gov:id',
+            issuerName: 'Kementerian Lingkungan Hidup dan Kehutanan',
+            claims: {
+              jenis_dokumen: 'UKL-UPL / PKPLH',
+              nomor_persetujuan: `PKPLH-KLHK-2026-${Date.now().toString().slice(-6)}`,
+              status_lingkungan: 'Persetujuan Teknis Sah & Retribusi/PNBP Terverifikasi SIMPONI',
+              ntpn: notif.metadata.ntpn || 'NTPN-SIMPONI-OK'
+            }
+          });
+        }
+      }
+
+      await this.addNotification({
+        type: 'CREDENTIAL_ISSUED',
+        title: `✅ Pembayaran Terverifikasi & Izin Resmi Diterbitkan!`,
+        message: `Setoran PNBP/Retribusi untuk kode billing ${notif.metadata.billingCode} telah diverifikasi sah oleh ${notif.metadata.authorityName}. Izin dan Verifiable Credential telah aktif dan disegel di portofolio Anda.`,
+        actionLabel: 'Buka di Folder VFC',
+        actionType: 'VIEW_CREDENTIAL',
+        metadata: {
+          folderKey: notif.metadata.umkuCode ? 'UMKU' : 'CREDENTIALS',
           targetTab: 'dashboard'
         }
       });

@@ -149,29 +149,52 @@
 
           <div class="flex items-center space-x-2 shrink-0">
             <span
-              v-if="isUmkuIssued(u.umku_code)"
+              v-if="getUmkuPaymentStatus(u.umku_code) === 'ISSUED'"
               class="px-2.5 py-1 bg-emerald-100 text-emerald-800 text-[11px] font-bold rounded-lg flex items-center space-x-1"
             >
               <span>✅</span>
               <span>Izin Terbit</span>
             </span>
             <span
-              v-else
-              class="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-lg flex items-center space-x-1"
+              v-else-if="getUmkuPaymentStatus(u.umku_code) === 'PROOF_UPLOADED'"
+              class="px-2.5 py-1 bg-blue-100 text-blue-800 text-[11px] font-bold rounded-lg flex items-center space-x-1"
             >
               <span>⏳</span>
-              <span>Belum Selesai</span>
+              <span>Verifikasi Bayar</span>
+            </span>
+            <span
+              v-else-if="getUmkuPaymentStatus(u.umku_code) === 'UNPAID'"
+              class="px-2.5 py-1 bg-amber-100 text-amber-800 text-[11px] font-bold rounded-lg flex items-center space-x-1"
+            >
+              <span>💳</span>
+              <span>Menunggu Bayar</span>
+            </span>
+            <span
+              v-else
+              class="px-2.5 py-1 bg-slate-100 text-slate-700 text-[11px] font-bold rounded-lg flex items-center space-x-1"
+            >
+              <span>📝</span>
+              <span>Siap Diajukan</span>
             </span>
 
             <button
               type="button"
               @click="onApplyUmkuClick(u)"
               class="px-3.5 py-1.5 text-xs font-bold rounded-xl transition flex items-center space-x-1.5 shadow-xs cursor-pointer"
-              :class="isUmkuIssued(u.umku_code)
+              :class="getUmkuPaymentStatus(u.umku_code) === 'ISSUED'
                 ? 'bg-slate-800 hover:bg-slate-700 text-white'
+                : getUmkuPaymentStatus(u.umku_code) === 'PROOF_UPLOADED'
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : getUmkuPaymentStatus(u.umku_code) === 'UNPAID'
+                ? 'bg-amber-600 hover:bg-amber-700 text-white'
                 : 'bg-amber-600 hover:bg-amber-700 text-white'"
             >
-              <span>{{ isUmkuIssued(u.umku_code) ? 'Lihat Izin Terbit' : 'Ajukan PB UMKU' }}</span>
+              <span>{{
+                getUmkuPaymentStatus(u.umku_code) === 'ISSUED' ? 'Lihat Izin Terbit' :
+                getUmkuPaymentStatus(u.umku_code) === 'PROOF_UPLOADED' ? 'Verifikasi Bayar' :
+                getUmkuPaymentStatus(u.umku_code) === 'UNPAID' ? 'Unggah Bukti Bayar' :
+                'Ajukan PB UMKU'
+              }}</span>
               <span>→</span>
             </button>
           </div>
@@ -186,6 +209,7 @@ import { computed } from 'vue';
 import type { PermitApplication } from '../stores/permitStore';
 import { usePermitStore } from '../stores/permitStore';
 import { useCredentialStore } from '../stores/credentialStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 const props = defineProps<{
   application: PermitApplication;
@@ -197,6 +221,7 @@ const emit = defineEmits<{
 
 const permitStore = usePermitStore();
 const credentialStore = useCredentialStore();
+const notificationStore = useNotificationStore();
 
 const isMainPermitIssued = computed(() => {
   return (
@@ -255,6 +280,21 @@ function isUmkuIssued(umkuCode: string): boolean {
       c.category === 'PB_UMKU' &&
       (c.claims?.umku_code === umkuCode || c.title.includes(umkuCode))
   );
+}
+
+function getUmkuPaymentStatus(umkuCode: string): 'ISSUED' | 'PROOF_UPLOADED' | 'UNPAID' | 'UNSUBMITTED' {
+  if (isUmkuIssued(umkuCode)) return 'ISSUED';
+  const form = permitStore.activeWizard.umkuFormData?.[umkuCode];
+  if (form?.paymentStatus === 'PROOF_UPLOADED') return 'PROOF_UPLOADED';
+  if (form?.paymentStatus === 'UNPAID') return 'UNPAID';
+
+  const notif = notificationStore.activeCompanyNotifications.find(
+    (n) => n.metadata?.umkuCode === umkuCode
+  );
+  if (notif?.metadata?.paymentStatus === 'PROOF_UPLOADED') return 'PROOF_UPLOADED';
+  if (notif?.metadata?.paymentStatus === 'UNPAID') return 'UNPAID';
+
+  return 'UNSUBMITTED';
 }
 
 const pendingUmkuCount = computed(() => {

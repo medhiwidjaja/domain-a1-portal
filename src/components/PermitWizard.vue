@@ -1015,15 +1015,66 @@
           </div>
 
           <!-- Dynamic Form Branch 2: UKL-UPL / AMDAL (MT / T) -->
-          <div v-else class="p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3 text-xs">
-            <h5 class="font-bold text-gray-900">Uraian Rencana Pengelolaan & Integrasi Dokumen Teknis Lingkungan</h5>
-            <div>
-              <label class="block font-bold text-gray-700 mb-1">Ringkasan Kajian Dampak Lingkungan</label>
-              <textarea
-                v-model="permitStore.activeWizard.formData.uraian_usaha_lingkungan"
-                rows="3"
-                class="w-full p-2.5 border rounded-lg text-gray-900 bg-white"
-              ></textarea>
+          <div v-else class="space-y-4">
+            <div class="p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3 text-xs">
+              <h5 class="font-bold text-gray-900">Uraian Rencana Pengelolaan & Integrasi Dokumen Teknis Lingkungan</h5>
+              <div>
+                <label class="block font-bold text-gray-700 mb-1">Ringkasan Kajian Dampak Lingkungan</label>
+                <textarea
+                  v-model="permitStore.activeWizard.formData.uraian_usaha_lingkungan"
+                  rows="3"
+                  class="w-full p-2.5 border rounded-lg text-gray-900 bg-white"
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Tagihan Retribusi / PNBP Lingkungan Hidup -->
+            <div class="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl space-y-3 text-xs">
+              <div class="flex items-center justify-between flex-wrap gap-2">
+                <div class="flex items-center space-x-2">
+                  <span class="text-base">💳</span>
+                  <span class="font-bold text-amber-950">Tagihan PNBP Uji Kelayakan Lingkungan Hidup: Rp 3.000.000,-</span>
+                </div>
+                <span
+                  class="text-[10px] font-mono font-bold px-2 py-0.5 rounded"
+                  :class="permitStore.activeWizard.formData.lingkunganPaymentVerified ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-amber-200 text-amber-900 border border-amber-300'"
+                >
+                  {{ permitStore.activeWizard.formData.lingkunganPaymentVerified ? '✅ Lunas & Terverifikasi' : '⚠️ Wajib Bayar & Verifikasi' }}
+                </span>
+              </div>
+              <p class="text-[11px] text-amber-800 leading-relaxed">
+                Persetujuan Teknis Lingkungan Hidup ({{ requiredEnvironmentalDocType.toUpperCase() }}) mengenakan tarif PNBP Uji Kelayakan sebesar <strong>Rp 3.000.000,-</strong> (PP 22/2021). Sistem OSS tidak memproses pembayaran online. Harap setorkan ke Bank Persepsi (Kode Billing Simponi: <strong>82026-PL-00918</strong>) lalu unggah bukti pembayaran di bawah ini sebelum melanjutkan ke tahap berikutnya.
+              </p>
+
+              <!-- Upload & Verify Controls -->
+              <div class="pt-2 border-t border-amber-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div v-if="permitStore.activeWizard.formData.lingkunganProofFileName" class="text-[11px] text-emerald-900 font-mono flex items-center space-x-2">
+                  <span>📁</span>
+                  <span class="font-bold">{{ permitStore.activeWizard.formData.lingkunganProofFileName }}</span>
+                  <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded font-bold">VFC: PEMBAYARAN</span>
+                </div>
+                <div v-else class="text-[11px] text-gray-500 italic">
+                  Belum ada bukti setor PNBP lingkungan yang diunggah.
+                </div>
+
+                <div class="flex items-center space-x-2 shrink-0">
+                  <label class="px-3 py-1.5 bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 font-bold text-xs rounded-lg shadow-2xs cursor-pointer transition flex items-center space-x-1">
+                    <span>📤</span>
+                    <span>{{ permitStore.activeWizard.formData.lingkunganProofFileName ? 'Ganti Bukti' : 'Unggah Bukti Setor' }}</span>
+                    <input type="file" class="hidden" @change="handleLingkunganPaymentProofUpload($event)" />
+                  </label>
+
+                  <button
+                    v-if="permitStore.activeWizard.formData.lingkunganProofFileName && !permitStore.activeWizard.formData.lingkunganPaymentVerified"
+                    type="button"
+                    @click="verifyLingkunganPayment"
+                    class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow transition flex items-center space-x-1 cursor-pointer"
+                  >
+                    <span>⚡</span>
+                    <span>Verifikasi (Simulasi DLH)</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1637,28 +1688,158 @@
         <!-- STATE B: UNLOCKED & READY FOR SUBMISSION -->
         <!-- ============================================== -->
         <div v-else-if="!isUmkuIssued(selectedPbUmku.umku_code)" class="space-y-6">
-          <!-- Unlocked Notice Banner -->
-          <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-900">
-            <div class="flex items-center space-x-3">
-              <span class="text-xl">✅</span>
-              <div>
-                <span class="font-bold block">NIB Izin Utama Telah Terbit — Formulir PB-UMKU Terbuka</span>
-                <span class="text-[11px] text-emerald-700">
-                  PB-UMKU ini independen dan dapat diajukan tanpa menunggu PB-UMKU lainnya. NIB Induk: <strong>{{ mainPermitRecord?.id || companyStore.activeCompany.nib }}</strong>.
+          <!-- B.1: PENDING OFFLINE PAYMENT & VERIFICATION GATE -->
+          <div
+            v-if="isUmkuPendingPayment(selectedPbUmku.umku_code)"
+            class="space-y-5"
+          >
+            <!-- Banner -->
+            <div class="p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl space-y-4 shadow-sm text-left">
+              <div class="flex items-start space-x-3">
+                <span class="text-3xl p-2 bg-white rounded-2xl border border-amber-200 shadow-2xs">💳</span>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between flex-wrap gap-2">
+                    <h3 class="text-base font-bold text-amber-950 flex items-center space-x-2">
+                      <span>Instruksi Pembayaran PNBP: {{ selectedPbUmku.title }}</span>
+                      <span
+                        class="text-[10px] font-bold px-2.5 py-0.5 rounded-full font-mono uppercase"
+                        :class="getUmkuPaymentInfo(selectedPbUmku.umku_code).paymentStatus === 'PROOF_UPLOADED' ? 'bg-blue-100 text-blue-900 border border-blue-300' : 'bg-amber-200 text-amber-900 border border-amber-300'"
+                      >
+                        {{ getUmkuPaymentInfo(selectedPbUmku.umku_code).paymentStatus === 'PROOF_UPLOADED' ? '⏳ Menunggu Verifikasi Instansi' : '⚠️ Menunggu Pembayaran' }}
+                      </span>
+                    </h3>
+                  </div>
+                  <p class="text-xs text-amber-900/85 mt-1 leading-relaxed">
+                    Permohonan PB-UMKU Anda telah terdaftar di sistem. Sesuai regulasi, <strong>izin tidak akan diterbitkan sebelum setoran PNBP diselesaikan dan diverifikasi</strong> oleh kementerian pembina ({{ selectedPbUmku.authority }}).
+                  </p>
+                </div>
+              </div>
+
+              <!-- Billing Details Card -->
+              <div class="bg-white border border-amber-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <span class="text-gray-500 block text-[11px]">Kode Billing Simponi:</span>
+                  <span class="font-mono font-bold text-gray-900 text-sm tracking-wide">{{ getUmkuPaymentInfo(selectedPbUmku.umku_code).billingCode }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500 block text-[11px]">Tarif PNBP:</span>
+                  <span class="font-bold text-amber-900 text-sm">{{ selectedPbUmku.pnbp_fee }}</span>
+                </div>
+                <div>
+                  <span class="text-gray-500 block text-[11px]">Instansi Pembina / Penerima:</span>
+                  <span class="font-semibold text-gray-800">{{ selectedPbUmku.authority }}</span>
+                </div>
+              </div>
+
+              <!-- Offline Notice -->
+              <div class="p-3 bg-amber-100/70 border border-amber-200 rounded-xl text-[11px] text-amber-900 space-y-1">
+                <span class="font-bold flex items-center space-x-1.5">
+                  <span>🏛️</span>
+                  <span>Prosedur Pembayaran Mandiri (Tanpa Fasilitas Online Gateway):</span>
                 </span>
+                <p class="leading-relaxed">
+                  Silakan lakukan setoran PNBP melalui Teller Bank Persepsi, ATM, atau Internet Banking menggunakan Kode Billing Simponi di atas. Setelah pembayaran selesai, unggah bukti transfer/slip setoran di bawah ini. Dokumen otomatis tersimpan ke Virtual Filing Cabinet (Folder Pembayaran).
+                </p>
+              </div>
+
+              <!-- Upload / Status Section -->
+              <div class="pt-2 border-t border-amber-200/80">
+                <!-- If UNPAID: Upload Box -->
+                <div v-if="getUmkuPaymentInfo(selectedPbUmku.umku_code).paymentStatus === 'UNPAID'" class="space-y-3">
+                  <label class="block font-bold text-xs text-gray-800">
+                    Unggah Bukti Pembayaran (Bukti Transfer / Slip Bank / Kuitansi Sah):
+                  </label>
+                  <div class="flex flex-wrap items-center gap-3">
+                    <label class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition flex items-center space-x-2">
+                      <span>📤</span>
+                      <span>Pilih Berkas & Unggah ke Filing Cabinet</span>
+                      <input
+                        type="file"
+                        class="hidden"
+                        @change="handleUmkuPaymentProofUpload($event, selectedPbUmku)"
+                      />
+                    </label>
+                    <span class="text-[11px] text-gray-500">Format: PDF, JPG, PNG (Maks 10 MB)</span>
+                  </div>
+                </div>
+
+                <!-- If PROOF_UPLOADED: Verifying state + simulated verify button -->
+                <div v-else class="space-y-3">
+                  <div class="p-3 bg-emerald-50 border border-emerald-300 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div class="flex items-center space-x-2">
+                      <span class="text-base">✅</span>
+                      <div>
+                        <span class="font-bold text-emerald-950 block">Bukti Pembayaran Terunggah:</span>
+                        <span class="text-emerald-800 text-[11px] font-mono">
+                          {{ getUmkuPaymentInfo(selectedPbUmku.umku_code).proofFileName }} • Tersimpan di VFC (Folder Pembayaran)
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                      <label class="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-[11px] font-bold rounded-lg cursor-pointer transition">
+                        <span>Ganti File</span>
+                        <input
+                          type="file"
+                          class="hidden"
+                          @change="handleUmkuPaymentProofUpload($event, selectedPbUmku)"
+                        />
+                      </label>
+                      <span class="text-[10px] font-mono bg-emerald-200 text-emerald-900 font-bold px-2 py-0.5 rounded">
+                        Status: Menunggu Verifikasi
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Simulation Trigger Box -->
+                  <div class="p-4 bg-slate-900 text-white rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
+                    <div class="space-y-0.5">
+                      <span class="text-xs font-bold text-amber-400 flex items-center space-x-1.5">
+                        <span>🧪</span>
+                        <span>Verifikasi Teknis & Rekonsiliasi Kas Negara (Simulasi PoC)</span>
+                      </span>
+                      <p class="text-[11px] text-slate-300">
+                        Untuk keperluan pengujian alur PoC, klik tombol verifikasi di samping untuk mensimulasikan persetujuan verifikasi setoran kas negara oleh instansi pembina.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      :disabled="isVerifyingPayment"
+                      @click="simulateVerifyUmkuPayment(selectedPbUmku)"
+                      class="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-extrabold text-xs rounded-xl shadow transition shrink-0 flex items-center space-x-1.5 cursor-pointer"
+                    >
+                      <span>⚡</span>
+                      <span>{{ isVerifyingPayment ? 'Memverifikasi...' : 'Verifikasi Pembayaran & Terbitkan Kredensial →' }}</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2.5 py-1 rounded-full font-mono shrink-0">
-              PP 5/2021 Terverifikasi
-            </span>
           </div>
 
-          <!-- PB-UMKU Submission Form -->
-          <div class="border border-gray-200 rounded-2xl p-6 bg-white space-y-6 shadow-xs">
-            <h3 class="font-bold text-sm text-gray-900 border-b border-gray-100 pb-3 flex items-center space-x-2">
-              <span>📝</span>
-              <span>Formulir Permohonan Teknis: {{ selectedPbUmku.title }}</span>
-            </h3>
+          <!-- B.2: UNLOCKED SUBMISSION FORM (When not yet submitted for payment) -->
+          <div v-else class="space-y-6">
+            <!-- Unlocked Notice Banner -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between text-xs text-emerald-900">
+              <div class="flex items-center space-x-3">
+                <span class="text-xl">✅</span>
+                <div>
+                  <span class="font-bold block">NIB Izin Utama Telah Terbit — Formulir PB-UMKU Terbuka</span>
+                  <span class="text-[11px] text-emerald-700">
+                    PB-UMKU ini independen dan dapat diajukan tanpa menunggu PB-UMKU lainnya. NIB Induk: <strong>{{ mainPermitRecord?.id || companyStore.activeCompany.nib }}</strong>.
+                  </span>
+                </div>
+              </div>
+              <span class="text-[10px] bg-emerald-200 text-emerald-900 font-bold px-2.5 py-1 rounded-full font-mono shrink-0">
+                PP 5/2021 Terverifikasi
+              </span>
+            </div>
+
+            <!-- PB-UMKU Submission Form -->
+            <div class="border border-gray-200 rounded-2xl p-6 bg-white space-y-6 shadow-xs w-full min-w-0 overflow-hidden">
+              <h3 class="font-bold text-sm text-gray-900 border-b border-gray-100 pb-3 flex items-center space-x-2">
+                <span>📝</span>
+                <span>Formulir Permohonan Teknis: {{ selectedPbUmku.title }}</span>
+              </h3>
 
             <!-- Parameter Usaha Teknis -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
@@ -1714,8 +1895,8 @@
             </div>
 
             <!-- Binding Dokumen Teknis dari VFC -->
-            <div class="pt-4 border-t border-gray-100 space-y-3">
-              <div class="flex items-center justify-between">
+            <div class="pt-4 border-t border-gray-100 space-y-3 w-full min-w-0">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h4 class="font-bold text-xs text-gray-900">
                     📂 Tautkan Dokumen Persyaratan Teknis dari VFC:
@@ -1724,24 +1905,24 @@
                     Centang dokumen yang relevan dari brankas dokumen Anda atau unggah langsung.
                   </p>
                 </div>
-                <span class="text-[11px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-200">
+                <span class="text-[11px] font-mono bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-bold border border-purple-200 shrink-0">
                   {{ getUmkuForm(selectedPbUmku.umku_code).selectedDocIds.length }} Dokumen Terkait
                 </span>
               </div>
 
-              <div class="space-y-2.5">
+              <div class="space-y-2.5 w-full min-w-0">
                 <div
                   v-for="(req, rIdx) in selectedPbUmku.requirements"
                   :key="rIdx"
-                  class="p-3.5 bg-slate-50 border rounded-xl space-y-2.5 transition"
+                  class="p-3.5 bg-slate-50 border rounded-xl space-y-2.5 transition w-full min-w-0 overflow-hidden"
                   :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'border-emerald-300 bg-emerald-50/20' : 'border-slate-200'"
                 >
-                  <div class="flex items-center justify-between text-xs">
-                    <span class="font-bold text-gray-800 flex items-center space-x-1.5">
-                      <span :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'text-emerald-600' : 'text-amber-600'">•</span>
-                      <span>{{ req }}</span>
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <span class="font-bold text-gray-800 flex items-start space-x-1.5 min-w-0 flex-1">
+                      <span :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'text-emerald-600' : 'text-amber-600'" class="mt-0.5 shrink-0">•</span>
+                      <span class="break-words">{{ req }}</span>
                     </span>
-                    <label class="px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 rounded-lg text-[11px] font-semibold cursor-pointer transition flex items-center space-x-1 shadow-2xs">
+                    <label class="shrink-0 px-2.5 py-1 bg-white hover:bg-amber-50 text-amber-700 border border-amber-300 rounded-lg text-[11px] font-semibold cursor-pointer transition flex items-center space-x-1 shadow-2xs self-start sm:self-auto">
                       <span>📤</span>
                       <span>{{ getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'Ganti / Upload Baru' : '+ Upload File' }}</span>
                       <input
@@ -1753,11 +1934,11 @@
                   </div>
 
                   <!-- Select from existing VFC docs -->
-                  <div class="flex items-center space-x-2 text-xs">
+                  <div class="w-full min-w-0">
                     <select
                       :value="getUmkuRequirementDocId(selectedPbUmku.umku_code, req)"
                       @change="onUmkuSelectDoc($event, selectedPbUmku.umku_code, req)"
-                      class="flex-1 p-2 bg-white border rounded-lg text-xs transition"
+                      class="w-full min-w-0 max-w-full p-2 bg-white border rounded-lg text-xs truncate transition focus:ring-2 focus:ring-amber-500 focus:outline-hidden cursor-pointer"
                       :class="getUmkuRequirementDocId(selectedPbUmku.umku_code, req) ? 'border-emerald-500 bg-emerald-50/40 text-emerald-950 font-medium' : 'border-gray-300 text-gray-700'"
                     >
                       <option value="">-- Pilih Dokumen dari VFC Vault --</option>
@@ -1774,14 +1955,14 @@
                   <!-- Bound Document Info Badge -->
                   <div
                     v-if="getBoundDoc(selectedPbUmku.umku_code, req)"
-                    class="flex items-center justify-between p-2 bg-emerald-50/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 p-2 bg-emerald-50/90 border border-emerald-200 rounded-lg text-[11px] text-emerald-900 w-full min-w-0"
                   >
-                    <div class="flex items-center space-x-2 truncate">
-                      <span class="text-xs">📁</span>
+                    <div class="flex items-center space-x-2 min-w-0 truncate flex-1">
+                      <span class="text-xs shrink-0">📁</span>
                       <span class="font-bold truncate">{{ getBoundDoc(selectedPbUmku.umku_code, req)?.title }}</span>
                       <span class="text-emerald-700 text-[10px] font-mono shrink-0">({{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileName }} • {{ getBoundDoc(selectedPbUmku.umku_code, req)?.fileSize }})</span>
                     </div>
-                    <span class="text-[9px] bg-emerald-200/90 text-emerald-900 font-bold px-2 py-0.5 rounded font-mono shrink-0">
+                    <span class="text-[9px] bg-emerald-200/90 text-emerald-900 font-bold px-2 py-0.5 rounded font-mono shrink-0 self-start sm:self-auto">
                       Tersimpan di VFC: {{ selectedPbUmku.title }}
                     </span>
                   </div>
@@ -1820,11 +2001,12 @@
                 class="px-6 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg transition flex items-center space-x-2"
               >
                 <span>🔒</span>
-                <span>{{ isSubmittingUmku ? 'Memproses Credential...' : 'Kirim Permohonan PB-UMKU & Terbitkan Credential →' }}</span>
+                <span>{{ isSubmittingUmku ? 'Memproses...' : (selectedPbUmku.pnbp_fee && !selectedPbUmku.pnbp_fee.includes('Rp 0') ? 'Kirim Permohonan & Terbitkan Tagihan PNBP →' : 'Kirim Permohonan PB-UMKU & Terbitkan Credential →') }}</span>
               </button>
             </div>
           </div>
         </div>
+      </div>
 
         <!-- ============================================== -->
         <!-- STATE C: ISSUED / APPROVED (Verifiable Credential) -->
@@ -2181,6 +2363,11 @@ async function handleLanjut(fromStep: number, toStep: number) {
 
   // If moving past Tahap 3 (Lingkungan)
   if (fromStep === 3 && toStep === 4) {
+    if (requiredEnvironmentalDocType.value !== 'sppl' && !permitStore.activeWizard.formData.lingkunganPaymentVerified) {
+      saveToastMessage.value = 'Persetujuan Lingkungan mensyaratkan bukti pembayaran PNBP dan verifikasi sebelum kredensial dapat diterbitkan!';
+      setTimeout(() => { saveToastMessage.value = null; }, 4000);
+      return;
+    }
     await credentialStore.issueCredential({
       category: 'LINGKUNGAN',
       title: `Verifiable ${requiredEnvironmentalDocType.value.toUpperCase()} (Persetujuan Lingkungan)`,
@@ -2327,6 +2514,16 @@ const umkuFormData = reactive<Record<string, {
   selectedDocIds: string[];
   requirementDocs?: Record<string, string>;
   declarationAgreed: boolean;
+  requiresPayment?: boolean;
+  pnbpFee?: string;
+  billingCode?: string;
+  billingAmount?: number;
+  paymentStatus?: 'UNPAID' | 'PROOF_UPLOADED' | 'VERIFIED';
+  paymentProofDocId?: string;
+  paymentProofFileName?: string;
+  submittedAt?: string;
+  verifiedAt?: string;
+  paymentVerifiedAt?: string;
 }>>({});
 
 if (permitStore.activeWizard.umkuFormData) {
@@ -2452,6 +2649,149 @@ watch(openAccordions, triggerAutoSave, { deep: true });
 watch(activeTrack, triggerAutoSave);
 watch(umkuFormData, triggerAutoSave, { deep: true });
 
+function isUmkuPendingPayment(umkuCode: string): boolean {
+  if (isUmkuIssued(umkuCode)) return false;
+  const form = getUmkuForm(umkuCode);
+  if (form.paymentStatus === 'UNPAID' || form.paymentStatus === 'PROOF_UPLOADED') return true;
+  const notif = notificationStore.activeCompanyNotifications.find(
+    (n) => n.metadata?.umkuCode === umkuCode && n.metadata?.paymentStatus !== 'PAID'
+  );
+  return !!notif;
+}
+
+function getUmkuPaymentInfo(umkuCode: string) {
+  const form = getUmkuForm(umkuCode);
+  const notif = notificationStore.activeCompanyNotifications.find(
+    (n) => n.metadata?.umkuCode === umkuCode
+  );
+  return {
+    billingCode: form.billingCode || notif?.metadata?.billingCode || `82026${Date.now().toString().slice(-8)}`,
+    amount: form.billingAmount || notif?.metadata?.amount || 2500000,
+    paymentStatus: form.paymentStatus || notif?.metadata?.paymentStatus || 'UNPAID',
+    proofFileName: form.paymentProofFileName || notif?.metadata?.proofFileName || '',
+    vfcDocId: form.paymentProofDocId || notif?.metadata?.vfcDocId || ''
+  };
+}
+
+async function handleUmkuPaymentProofUpload(e: Event, umku: any) {
+  const target = e.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+  const file = target.files[0];
+  const fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+
+  const newDoc = await vfcStore.addDocument({
+    companyId: companyStore.activeCompanyId,
+    category: 'PEMBAYARAN',
+    title: `Bukti Pembayaran PNBP: ${umku.title}`,
+    fileName: file.name,
+    fileSize: fileSize === '0.0 MB' ? '650 KB' : fileSize,
+    url: '#'
+  });
+
+  const form = getUmkuForm(umku.umku_code);
+  form.paymentStatus = 'PROOF_UPLOADED';
+  form.paymentProofDocId = newDoc.id;
+  form.paymentProofFileName = file.name;
+  triggerAutoSave();
+
+  const notif = notificationStore.activeCompanyNotifications.find(
+    (n) => n.metadata?.umkuCode === umku.umku_code
+  );
+  if (notif) {
+    await notificationStore.uploadPaymentProof(notif.id, {
+      fileName: file.name,
+      fileSize: fileSize,
+      bankName: 'Bank Mandiri (Kas Negara)',
+      ntpn: `NTPN${Date.now().toString().slice(-8)}`,
+      vfcDocId: newDoc.id
+    });
+  }
+
+  target.value = '';
+  saveToastMessage.value = `Bukti pembayaran "${file.name}" berhasil diunggah ke VFC (Folder Pembayaran)! Menunggu verifikasi instansi.`;
+  setTimeout(() => {
+    saveToastMessage.value = null;
+  }, 4000);
+}
+
+const isVerifyingPayment = ref(false);
+
+async function simulateVerifyUmkuPayment(umku: any) {
+  isVerifyingPayment.value = true;
+  const form = getUmkuForm(umku.umku_code);
+  const mainPermit = mainPermitRecord.value;
+  const nibNumber = mainPermit?.id || companyStore.activeCompany.nib || 'NIB-2026-992100';
+
+  await credentialStore.issueCredential({
+    category: 'PB_UMKU',
+    title: `Verifiable PB-UMKU: ${umku.title}`,
+    kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01286',
+    kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+    credentialType: 'VerifiableUMKU',
+    issuerDid: umku.authority.includes('PVTPP')
+      ? 'did:oss:kementan:pvtpp:gov:id'
+      : 'did:oss:kementan:perkebunan:gov:id',
+    issuerName: umku.authority,
+    claims: {
+      umku_code: umku.umku_code,
+      nomor_izin_umku: `UMKU-${Date.now().toString().slice(-6)}/KEMTAN/2026`,
+      nama_varietas: form.varietyName,
+      deskripsi_teknis: form.technicalDescription,
+      lokasi_pengujian: form.testingLocation,
+      nomor_nib_induk: nibNumber,
+      instansi_pembina: umku.authority,
+      pnbp_status: `Lunas Terverifikasi SIMPONI (NTPN: NTPN-${Date.now().toString().slice(-6)})`,
+      status_izin: 'AKTIF & BERLAKU NASIONAL',
+      dokumen_pendukung_vfc: form.selectedDocIds?.length || 1
+    }
+  });
+
+  form.paymentStatus = 'VERIFIED';
+  form.paymentVerifiedAt = new Date().toISOString();
+  triggerAutoSave();
+
+  const notif = notificationStore.activeCompanyNotifications.find(
+    (n) => n.metadata?.umkuCode === umku.umku_code
+  );
+  if (notif) {
+    await notificationStore.verifyPayment(notif.id);
+  }
+
+  isVerifyingPayment.value = false;
+  saveToastMessage.value = `Pembayaran terverifikasi! PB-UMKU "${umku.title}" resmi diterbitkan sebagai Verifiable Credential.`;
+  setTimeout(() => {
+    saveToastMessage.value = null;
+  }, 4000);
+}
+
+async function handleLingkunganPaymentProofUpload(e: Event) {
+  const target = e.target as HTMLInputElement;
+  if (!target.files || target.files.length === 0) return;
+  const file = target.files[0];
+  const fileSize = `${(file.size / 1024 / 1024).toFixed(1)} MB`;
+
+  await vfcStore.addDocument({
+    companyId: companyStore.activeCompanyId,
+    category: 'PEMBAYARAN',
+    title: 'Bukti Pembayaran PNBP Uji Kelayakan Lingkungan Hidup',
+    fileName: file.name,
+    fileSize: fileSize === '0.0 MB' ? '780 KB' : fileSize,
+    url: '#'
+  });
+
+  permitStore.activeWizard.formData.lingkunganProofFileName = file.name;
+  permitStore.persistDraft();
+  saveToastMessage.value = `Bukti bayar lingkungan "${file.name}" tersimpan di VFC! Klik "Verifikasi" untuk menyelesaikan.`;
+  setTimeout(() => { saveToastMessage.value = null; }, 3500);
+}
+
+function verifyLingkunganPayment() {
+  permitStore.activeWizard.formData.lingkunganPaymentVerified = true;
+  permitStore.persistDraft();
+  saveToastMessage.value = 'Pembayaran PNBP Lingkungan terverifikasi! Anda kini dapat melanjutkan ke tahap berikutnya.';
+  setTimeout(() => { saveToastMessage.value = null; }, 3500);
+}
+
 const isSubmittingUmku = ref(false);
 
 async function handleUmkuSubmit(umku: any) {
@@ -2460,6 +2800,52 @@ async function handleUmkuSubmit(umku: any) {
   const mainPermit = mainPermitRecord.value;
   const nibNumber = mainPermit?.id || companyStore.activeCompany.nib || 'NIB-2026-992100';
 
+  const requiresPayment = umku.pnbp_fee && !umku.pnbp_fee.includes('Rp 0');
+
+  if (requiresPayment) {
+    const billingCode = `82026${Date.now().toString().slice(-8)}`;
+    const feeMatch = umku.pnbp_fee.match(/Rp\s*([\d\.]+)/);
+    const amount = feeMatch ? parseInt(feeMatch[1].replace(/\./g, ''), 10) : 2500000;
+
+    form.requiresPayment = true;
+    form.pnbpFee = umku.pnbp_fee;
+    form.billingCode = billingCode;
+    form.billingAmount = amount;
+    form.paymentStatus = 'UNPAID';
+    form.submittedAt = new Date().toISOString();
+
+    await notificationStore.addNotification({
+      type: 'PNBP_BILLING',
+      title: `Surat Perintah Setor: Tagihan PNBP ${umku.title}`,
+      message: `${umku.authority} telah menerbitkan Surat Perintah Setor PNBP untuk ${umku.title} dengan Kode Billing Simponi ${billingCode} senilai ${umku.pnbp_fee}. Sistem OSS tidak melayani pembayaran online. Silakan lakukan pembayaran melalui teller bank, ATM, atau internet banking, kemudian unggah bukti pembayaran di portal untuk dilakukan verifikasi. Izin tidak akan diterbitkan sebelum bukti pembayaran diverifikasi.`,
+      actionLabel: 'Unggah Bukti Bayar',
+      actionType: 'UPLOAD_PAYMENT_PROOF',
+      metadata: {
+        billingCode,
+        amount,
+        paymentStatus: 'UNPAID',
+        authorityName: umku.authority,
+        umkuCode: umku.umku_code,
+        umkuTitle: umku.title,
+        varietyName: form.varietyName,
+        kbliCode: permitStore.activeWizard.kbli?.kbli_code || '01286',
+        kbliTitle: permitStore.activeWizard.kbli?.title || 'Kegiatan Usaha',
+        folderKey: 'PEMBAYARAN'
+      }
+    });
+
+    permitStore.activeWizard.umkuFormData = JSON.parse(JSON.stringify(umkuFormData));
+    await permitStore.persistDraft();
+
+    isSubmittingUmku.value = false;
+    saveToastMessage.value = `Permohonan PB-UMKU terkirim. Surat Perintah Setor PNBP diterbitkan ke Kotak Masuk!`;
+    setTimeout(() => {
+      saveToastMessage.value = null;
+    }, 4000);
+    return;
+  }
+
+  // If no payment required (Rp 0 / Free), issue directly
   await credentialStore.issueCredential({
     category: 'PB_UMKU',
     title: `Verifiable PB-UMKU: ${umku.title}`,
@@ -2478,7 +2864,7 @@ async function handleUmkuSubmit(umku: any) {
       lokasi_pengujian: form.testingLocation,
       nomor_nib_induk: nibNumber,
       instansi_pembina: umku.authority,
-      pnbp_status: umku.pnbp_fee?.includes('Rp 0') ? 'Bebas Tarif (Fasilitasi)' : 'Lunas Terverifikasi SIMPONI',
+      pnbp_status: 'Bebas Tarif (Fasilitasi Negara)',
       status_izin: 'AKTIF & BERLAKU NASIONAL',
       dokumen_pendukung_vfc: form.selectedDocIds.length
     }

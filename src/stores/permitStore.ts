@@ -235,6 +235,8 @@ export const usePermitStore = defineStore('permitStore', {
         tgl_terbit_lingkungan: '',
         uraian_usaha_lingkungan: 'Kegiatan usaha ini berkomitmen menerapkan pengelolaan limbah dan pencegahan pencemaran lingkungan hidup sesuai baku mutu nasional.',
         flag_pernyataan_sppl: true,
+        lingkunganPaymentVerified: false,
+        lingkunganProofFileName: '',
 
         // Persyaratan Dasar 3: Bangunan Gedung (PBG & SLF)
         memerlukan_bangunan: 'Y' as 'Y' | 'N',
@@ -512,6 +514,8 @@ export const usePermitStore = defineStore('permitStore', {
         tgl_terbit_lingkungan: '',
         uraian_usaha_lingkungan: `Rencana kegiatan ${kbli.title} dengan mematuhi baku mutu lingkungan hidup dan pengelolaan limbah operasional sesuai regulasi pemerintah.`,
         flag_pernyataan_sppl: true,
+        lingkunganPaymentVerified: false,
+        lingkunganProofFileName: '',
 
         // PBG & SLF
         memerlukan_bangunan: isMarine ? 'N' : 'Y',
