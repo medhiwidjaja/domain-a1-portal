@@ -80,15 +80,29 @@ export async function getDb(): Promise<IDBDatabase> {
 }
 
 /**
+ * Safely clone objects to ensure Vue reactive proxies, Pinia state,
+ * or non-cloneable references are converted into clean structured-cloneable plain objects.
+ */
+function toCloneable<T>(val: T): any {
+  if (val === null || val === undefined) return val;
+  try {
+    return JSON.parse(JSON.stringify(val));
+  } catch (err) {
+    return val;
+  }
+}
+
+/**
  * Put an item into a specified store
  */
 export async function idbPut<T>(storeName: StoreName, value: T): Promise<T> {
   const db = await getDb();
+  const cleanValue = toCloneable(value);
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
-    const req = store.put(value);
-    req.onsuccess = () => resolve(value);
+    const req = store.put(cleanValue);
+    req.onsuccess = () => resolve(cleanValue);
     req.onerror = () => reject(req.error);
   });
 }
@@ -126,10 +140,11 @@ export async function idbGetAll<T>(storeName: StoreName): Promise<T[]> {
  */
 export async function idbPutAll<T>(storeName: StoreName, items: T[]): Promise<void> {
   const db = await getDb();
+  const cleanItems = toCloneable(items);
   return new Promise((resolve, reject) => {
     const tx = db.transaction(storeName, 'readwrite');
     const store = tx.objectStore(storeName);
-    for (const item of items) {
+    for (const item of cleanItems) {
       store.put(item);
     }
     tx.oncomplete = () => resolve();
