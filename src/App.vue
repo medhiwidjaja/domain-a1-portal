@@ -248,8 +248,8 @@ function handleOpenVfcFolder(folderKey: string) {
 
 const tabs = computed(() => [
   { id: 'dashboard' as const, label: 'Home', icon: '🏠', badge: activeApplications.value.length },
-  { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
-  { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' },
+  { id: 'kbli' as const, label: 'Temukan', icon: '🔍' },
+  { id: 'wizard' as const, label: 'Siapkan', icon: '📝' },
   { id: 'inbox' as const, label: 'Kotak Masuk', icon: '📬', badge: notificationStore.unreadCount }
 ]);
 
