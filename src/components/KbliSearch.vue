@@ -8,7 +8,7 @@
         </span>
         <h2 class="text-xl font-bold mt-2">Pencarian Klasifikasi Baku Lapangan Usaha Indonesia</h2>
         <p class="text-xs text-slate-300 mt-1">
-          Daftar 200 KBLI lengkap dengan ruang lingkup kegiatan (scopes), tingkat risiko, kewenangan regulator, dan prasyarat perizinan.
+          Daftar KBLI lengkap dengan ruang lingkup kegiatan (scopes), tingkat risiko, kewenangan regulator, dan prasyarat perizinan.
         </p>
       </div>
 
