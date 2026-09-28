@@ -163,14 +163,14 @@ export const useCredentialStore = defineStore('credentialStore', {
         Math.floor(Math.random() * 16).toString(16)
       ).join('');
 
-      const vcId = `urn:uuid:vc-${payload.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}-2026-${payload.kbliCode}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const vcId = `urn:uuid:vc-${payload.category.toLowerCase().replace(/[^a-z0-9]/g, '-')}-2026-${payload.kbliCode.toLowerCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
       // Check if credential already issued for this company & category & kbli
       const existingIdx = this.credentials.findIndex(
         (c) =>
           c.companyId === targetCompany &&
           c.category === payload.category &&
-          c.kbliCode === payload.kbliCode
+          (payload.category === 'NIB' ? true : c.kbliCode === payload.kbliCode)
       );
 
       const newCred: PersyaratanDasarCredential = {
@@ -199,11 +199,19 @@ export const useCredentialStore = defineStore('credentialStore', {
       await this.persist();
 
       // Dispatch notification & Flash card
+      const notifTitle = payload.category === 'NIB'
+        ? `Verifiable NIB Resmi Terbit (${payload.claims?.nomor_nib || ''})`
+        : `Verifiable Credential Terbit: ${payload.credentialType}`;
+
+      const notifMsg = payload.category === 'NIB'
+        ? `Nomor Induk Berusaha (NIB ${payload.claims?.nomor_nib || ''}) untuk ${payload.claims?.nama_perusahaan || payload.title} telah berhasil diterbitkan setelah verifikasi AHU Kemenkumham & DJP Kemenkeu.`
+        : `${payload.title} untuk KBLI ${payload.kbliCode} telah lolos validasi Persyaratan Dasar dan disegel ke dalam Virtual Filing Cabinet Anda.`;
+
       await notificationStore.addNotification({
         companyId: targetCompany,
         type: 'CREDENTIAL_ISSUED',
-        title: `Verifiable Credential Terbit: ${payload.credentialType}`,
-        message: `${payload.title} untuk KBLI ${payload.kbliCode} telah lolos validasi Persyaratan Dasar dan disegel ke dalam Virtual Filing Cabinet Anda.`,
+        title: notifTitle,
+        message: notifMsg,
         actionLabel: 'Buka di Folder VFC',
         actionType: 'VIEW_CREDENTIAL',
         metadata: {

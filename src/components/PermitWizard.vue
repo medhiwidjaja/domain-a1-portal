@@ -379,23 +379,39 @@ const isMainPermitIssued = computed(() => {
   if (permitStore.activeWizard.step === 6) return true;
   const currentKbliCode = permitStore.activeWizard.kbli?.kbli_code;
   if (!currentKbliCode) return false;
-  return permitStore.applications.some(
-    (app) => app.companyId === companyStore.activeCompanyId &&
-             app.kbliCode === currentKbliCode &&
-             app.status === 'APPROVED'
+  return (
+    permitStore.applications.some(
+      (app) => app.companyId === companyStore.activeCompanyId &&
+               app.kbliCode === currentKbliCode &&
+               app.status === 'APPROVED'
+    ) ||
+    credentialStore.activeCompanyCredentials.some(
+      (c) => c.category === 'NIB'
+    )
   );
 });
 
 const mainPermitRecord = computed(() => {
   const currentKbliCode = permitStore.activeWizard.kbli?.kbli_code;
   if (!currentKbliCode) return null;
-  return (
-    permitStore.applications.find(
-      (app) => app.companyId === companyStore.activeCompanyId &&
-               app.kbliCode === currentKbliCode &&
-               app.status === 'APPROVED'
-    ) || (permitStore.activeWizard.step === 6 ? permitStore.applications[0] : null)
+  const app = permitStore.applications.find(
+    (a) => a.companyId === companyStore.activeCompanyId &&
+           a.kbliCode === currentKbliCode &&
+           a.status === 'APPROVED'
   );
+  if (app) return app;
+  if (permitStore.activeWizard.step === 6 && permitStore.applications[0]) {
+    return permitStore.applications[0];
+  }
+  const nibCred = credentialStore.activeCompanyCredentials.find((c) => c.category === 'NIB');
+  if (nibCred) {
+    return {
+      id: nibCred.claims?.nomor_nib || companyStore.activeCompany.nib || 'NIB-2026-992100',
+      kbliCode: currentKbliCode,
+      status: 'APPROVED'
+    };
+  }
+  return null;
 });
 
 function getUmkuCredential(umkuCode: string) {

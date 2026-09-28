@@ -179,11 +179,12 @@
                       vc.category === 'LINGKUNGAN' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
                       vc.category === 'PBG_SLF' ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30' :
                       vc.category === 'PB_UMKU' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' :
+                      vc.category === 'NIB' ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' :
                       'bg-purple-500/20 text-purple-300 border border-purple-500/30'
                     ]"
                   >
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>{{ vc.category === 'PBG_SLF' ? 'PBG / SLF' : vc.category === 'PB_UMKU' ? 'PB-UMKU' : vc.category }}</span>
+                    <span>{{ vc.category === 'PBG_SLF' ? 'PBG / SLF' : vc.category === 'PB_UMKU' ? 'PB-UMKU' : vc.category === 'NIB' ? 'NIB (Induk)' : vc.category }}</span>
                   </span>
                   <span class="text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">
                     {{ vc.credentialType }}
@@ -193,13 +194,25 @@
                 <div class="mt-2">
                   <h4 class="font-bold text-xs text-white line-clamp-1">{{ vc.title }}</h4>
                   <div class="flex items-center space-x-2 text-[10px] text-slate-300 mt-0.5">
-                    <span>KBLI {{ vc.kbliCode }}</span>
+                    <span>{{ vc.kbliCode === 'INDUK' ? 'Legalitas Entitas' : 'KBLI ' + vc.kbliCode }}</span>
                     <span>•</span>
                     <span class="text-slate-400 truncate max-w-[150px]">{{ vc.issuerName }}</span>
                   </div>
 
                   <!-- Key Claims Highlights -->
                   <div v-if="vc.claims" class="mt-2 bg-slate-800/80 p-2 rounded-lg text-[9px] font-mono space-y-0.5 border border-slate-700">
+                    <div v-if="vc.claims.nomor_nib" class="truncate text-indigo-300 font-bold">
+                      NIB: {{ vc.claims.nomor_nib }}
+                    </div>
+                    <div v-if="vc.claims.nama_perusahaan" class="truncate text-slate-200">
+                      Entitas: {{ vc.claims.nama_perusahaan }}
+                    </div>
+                    <div v-if="vc.claims.nomor_sk_ahu" class="truncate text-cyan-300">
+                      SK AHU: {{ vc.claims.nomor_sk_ahu }}
+                    </div>
+                    <div v-if="vc.claims.status_kswp_djp" class="truncate text-emerald-300">
+                      KSWP: {{ vc.claims.status_kswp_djp }} (DJP)
+                    </div>
                     <div v-if="vc.claims.nomor_izin_umku" class="truncate text-amber-300 font-bold">
                       No Izin: {{ vc.claims.nomor_izin_umku }}
                     </div>
@@ -261,13 +274,26 @@
                       {{ companyStore.activeCompany.type }}
                     </span>
                   </div>
-                  <span class="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold">
+                  <span
+                    v-if="hasActiveNibCredential"
+                    class="text-[9px] text-emerald-800 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full font-bold flex items-center space-x-1"
+                  >
+                    <span>✓</span>
+                    <span>NIB Terbit</span>
+                  </span>
+                  <span
+                    v-else
+                    class="text-[9px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-semibold"
+                  >
                     AHU & KSWP
                   </span>
                 </div>
                 <p class="text-[10px] text-slate-600 mt-1 truncate">
                   {{ companyStore.activeCompany.name }}
                 </p>
+                <div v-if="companyStore.activeCompany.nib" class="text-[10px] font-mono text-blue-800 font-semibold mt-0.5">
+                  NIB: {{ companyStore.activeCompany.nib }}
+                </div>
                 <button
                   @click="openCompanyProfileModal"
                   type="button"
@@ -757,9 +783,15 @@
                 <span>🛡️</span>
                 <span>Integrasi Lembaga Eksternal (Zone C0 In-Browser Simulation)</span>
               </span>
-              <span class="text-[10px] text-blue-600 bg-blue-100 px-2 py-0.5 rounded font-mono">
-                No External Network Calls
-              </span>
+              <button
+                type="button"
+                @click="simulateAllSync"
+                :disabled="isSyncingAhu || isCheckingKswp"
+                class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold text-[10px] rounded-lg shadow-xs transition flex items-center space-x-1"
+              >
+                <span>⚡</span>
+                <span>Verifikasi Otomatis (AHU + DJP)</span>
+              </button>
             </div>
 
             <!-- AHU Online -->
@@ -807,6 +839,25 @@
                 <span>{{ isCheckingKswp ? '⏳ Memeriksa...' : '🛡️ Verifikasi KSWP' }}</span>
               </button>
             </div>
+
+            <!-- NIB Readiness status box -->
+            <div
+              class="p-3 rounded-xl border text-xs flex items-start space-x-2.5 transition"
+              :class="isAhuAndKswpVerified ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'"
+            >
+              <span class="text-base">{{ isAhuAndKswpVerified ? '📜' : '🔒' }}</span>
+              <div>
+                <span class="font-bold block">
+                  {{ isAhuAndKswpVerified ? 'Syarat Terverifikasi: Siap Menerbitkan NIB Credential' : 'Verifikasi AHU & DJP Diperlukan' }}
+                </span>
+                <p class="text-[11px] mt-0.5 leading-relaxed">
+                  {{ isAhuAndKswpVerified
+                    ? 'Data legalitas badan usaha dan kepatuhan pajak telah valid. Saat disimpan, berkas legalitas akan disimpan ke folder PERUSAHAAN dan Verifiable NIB Credential resmi akan diterbitkan ke brankas VFC Anda.'
+                    : 'Pastikan status AHU Kemenkumham dan KSWP DJP terverifikasi untuk menyimpan berkas ke VFC dan menerbitkan NIB Credential.'
+                  }}
+                </p>
+              </div>
+            </div>
           </div>
 
           <!-- Modal Actions -->
@@ -820,9 +871,10 @@
             </button>
             <button
               type="submit"
-              class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow transition"
+              class="px-5 py-2 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
+              :class="isAhuAndKswpVerified ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'"
             >
-              Simpan Profil Entitas
+              <span>{{ isAhuAndKswpVerified ? '🛡️ Simpan ke VFC & Terbitkan NIB Credential' : 'Simpan Profil Entitas' }}</span>
             </button>
           </div>
         </form>
@@ -1279,12 +1331,138 @@ async function simulateKswpCheck() {
   kswpCheckSuccess.value = true;
 }
 
+const isAhuAndKswpVerified = computed(() => {
+  return Boolean(editingCompany.ahu_sk_number && editingCompany.ahu_sk_number.trim() !== '') &&
+         editingCompany.kswp_status === 'VALID';
+});
+
+const hasActiveNibCredential = computed(() => {
+  return allVerifiableCredentials.value.some((c) => c.category === 'NIB');
+});
+
+async function simulateAllSync() {
+  await Promise.all([simulateAhuSync(), simulateKswpCheck()]);
+}
+
 async function handleSaveCompanyProfile() {
+  const isAhuVerified = Boolean(editingCompany.ahu_sk_number && editingCompany.ahu_sk_number.trim() !== '');
+  const isKswpVerified = editingCompany.kswp_status === 'VALID';
+
+  // 1. Verify AHU & DJP if not yet verified
+  if (!isAhuVerified || !isKswpVerified) {
+    const confirmAutoSync = confirm(
+      'Data profil legalitas belum terverifikasi penuh oleh AHU Kemenkumham dan KSWP DJP.\n\nApakah Anda ingin menjalankan verifikasi otomatis AHU dan DJP sekarang untuk menerbitkan NIB Credential?'
+    );
+    if (!confirmAutoSync) {
+      return;
+    }
+    if (!isAhuVerified) {
+      editingCompany.ahu_sk_number = `AHU-${Math.floor(1000000 + Math.random() * 9000000)}.AH.01.01.TAHUN 2026`;
+      editingCompany.ahu_date = new Date().toISOString().slice(0, 10);
+      editingCompany.notary_name = editingCompany.notary_name || 'Suryadharma, S.H., M.Kn.';
+      ahuSyncSuccess.value = true;
+    }
+    if (!isKswpVerified) {
+      editingCompany.kswp_status = 'VALID';
+      editingCompany.tax_compliance = 'Status KSWP Memenuhi Syarat (Konfirmasi Status Wajib Pajak DJP Valid)';
+      kswpCheckSuccess.value = true;
+    }
+  }
+
+  // 2. Ensure official NIB number
+  const currentNib = editingCompany.nib && editingCompany.nib.trim() !== ''
+    ? editingCompany.nib.trim()
+    : `912000${Math.floor(1000000 + Math.random() * 9000000)}`;
+  editingCompany.nib = currentNib;
+
+  // 3. Update Company Store Profile
   await companyStore.updateCompanyProfile(companyStore.activeCompanyId, {
-    ...editingCompany
+    ...editingCompany,
+    nib: currentNib
   });
+
+  // 4. Store Verified Data in VFC (Folder: PERUSAHAAN)
+  const ahuDocTitle = `SK Pengesahan AHU: ${editingCompany.name}`;
+  const existingAhu = currentCompanyDocs.value.find(
+    (d) => d.category === 'PERUSAHAAN' && d.title.includes('AHU')
+  );
+  if (!existingAhu) {
+    await vfcStore.addDocument({
+      companyId: companyStore.activeCompanyId,
+      category: 'PERUSAHAAN',
+      title: ahuDocTitle,
+      fileName: `sk_kemenkumham_${editingCompany.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.pdf`,
+      fileSize: '1.8 MB',
+      url: '#'
+    });
+  }
+
+  const kswpDocTitle = `Konfirmasi Status Wajib Pajak (KSWP DJP Valid): ${editingCompany.npwp}`;
+  const existingKswp = currentCompanyDocs.value.find(
+    (d) => d.category === 'PERUSAHAAN' && d.title.includes('KSWP')
+  );
+  if (!existingKswp) {
+    await vfcStore.addDocument({
+      companyId: companyStore.activeCompanyId,
+      category: 'PERUSAHAAN',
+      title: kswpDocTitle,
+      fileName: `kswp_djp_${editingCompany.npwp.replace(/[^0-9]/g, '')}_valid.pdf`,
+      fileSize: '480 KB',
+      url: '#'
+    });
+  }
+
+  const profileDocTitle = `Profil Legalitas & Entitas Usaha Terverifikasi: ${editingCompany.name}`;
+  const existingProfile = currentCompanyDocs.value.find(
+    (d) => d.category === 'PERUSAHAAN' && d.title.includes('Profil Legalitas')
+  );
+  if (!existingProfile) {
+    await vfcStore.addDocument({
+      companyId: companyStore.activeCompanyId,
+      category: 'PERUSAHAAN',
+      title: profileDocTitle,
+      fileName: `profil_legalitas_${editingCompany.name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.pdf`,
+      fileSize: '850 KB',
+      url: '#'
+    });
+  }
+
+  // 5. Issue Verifiable NIB Credential for the Company
+  await credentialStore.issueCredential({
+    companyId: companyStore.activeCompanyId,
+    category: 'NIB',
+    title: `Verifiable NIB (Nomor Induk Berusaha): ${editingCompany.name}`,
+    kbliCode: 'INDUK',
+    kbliTitle: `Nomor Induk Berusaha (${editingCompany.type})`,
+    credentialType: 'VerifiableNIB',
+    issuerDid: 'did:oss:bkpm:gov:id',
+    issuerName: 'Kementerian Investasi / BKPM Republik Indonesia',
+    claims: {
+      nomor_nib: currentNib,
+      nama_perusahaan: editingCompany.name,
+      bentuk_badan_usaha: editingCompany.type,
+      npwp_perusahaan: editingCompany.npwp,
+      status_penanaman_modal: editingCompany.status_penanaman_modal === '01' ? 'PMA (Penanaman Modal Asing)' : 'PMDN (Penanaman Modal Dalam Negeri)',
+      modal_disetor_idr: editingCompany.capital,
+      skala_usaha: editingCompany.scale,
+      nomor_sk_ahu: editingCompany.ahu_sk_number,
+      tanggal_pengesahan_ahu: editingCompany.ahu_date,
+      nama_notaris: editingCompany.notary_name,
+      status_kswp_djp: editingCompany.kswp_status,
+      kepatuhan_pajak: editingCompany.tax_compliance,
+      alamat_domisili: editingCompany.address,
+      tanggal_terbit: new Date().toISOString().slice(0, 10),
+      status_legalitas: 'AKTIF & TERVERIFIKASI RESMI AHU & DJP'
+    }
+  });
+
+  // Expand folders in VFC so user immediately sees results
+  expandedFolders['PERUSAHAAN'] = true;
+  expandedFolders['CREDENTIALS'] = true;
+
   showCompanyProfileModal.value = false;
-  alert('Profil perusahaan dan status legalitas berhasil diperbarui!');
+
+  alert(`🎉 Sukses!\n\n1. Profil Legalitas Entitas "${editingCompany.name}" telah terverifikasi AHU & DJP.\n2. Berkas legalitas resmi tersimpan di folder VFC "PERUSAHAAN".\n3. Verifiable NIB (${currentNib}) resmi diterbitkan dan disegel ke dalam folder VFC "CREDENTIALS"!`);
 }
 
 // Location Studio Modal state & actions
