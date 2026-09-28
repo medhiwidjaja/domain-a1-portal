@@ -4,11 +4,11 @@
     <div class="p-6 bg-slate-900 text-white">
       <div class="max-w-3xl">
         <span class="bg-blue-600 text-white text-[10px] font-mono font-bold px-2 py-0.5 rounded">
-          Katalog KBLI 2020 & Regulasi PP 28/2025
+          Katalog KBLI
         </span>
         <h2 class="text-xl font-bold mt-2">Pencarian Klasifikasi Baku Lapangan Usaha Indonesia</h2>
         <p class="text-xs text-slate-300 mt-1">
-          Daftar 200 KBLI lengkap dengan ruang lingkup kegiatan (scopes), tingkat risiko, kewenangan regulator, dan prasyarat perizinan.
+          Daftar KBLI lengkap dengan ruang lingkup kegiatan (scopes), tingkat risiko, kewenangan regulator, dan prasyarat perizinan.
         </p>
       </div>
 

@@ -15,7 +15,7 @@
           </div>
           <div>
             <div class="flex items-center space-x-2">
-              <h1 class="font-extrabold text-base tracking-tight text-white">OSS v2 Target Architecture</h1>
+              <h1 class="font-extrabold text-base tracking-tight text-white">OSS</h1>
               <span class="bg-blue-500/20 text-blue-300 border border-blue-400/30 text-[10px] font-mono font-bold px-2 py-0.5 rounded">
                 Domain A1 — Pelaku Usaha PoC
               </span>
@@ -25,10 +25,6 @@
         </div>
 
         <div class="flex items-center space-x-4">
-          <div class="hidden sm:flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 text-xs">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-300">Stateless DMN & Flowable BPMN Engine Active</span>
-          </div>
 
           <div class="flex items-center space-x-2">
             <div class="w-8 h-8 rounded-full bg-blue-700 text-white flex items-center justify-center font-bold text-xs">
@@ -133,7 +129,7 @@
 
               <div v-if="activeApplications.length === 0" class="bg-white rounded-xl p-10 text-center border text-gray-500">
                 <p class="font-semibold text-gray-700 text-sm">Belum ada permohonan izin aktif untuk entitas ini.</p>
-                <p class="text-xs text-gray-400 mt-1">Pilih tab "Pencarian KBLI" untuk memulai pengajuan permohonan baru.</p>
+                <p class="text-xs text-gray-400 mt-1">Pilih tab "Temukan" untuk memulai pengajuan permohonan baru.</p>
               </div>
 
               <div v-else class="space-y-4">
@@ -248,8 +244,8 @@ function handleOpenVfcFolder(folderKey: string) {
 
 const tabs = computed(() => [
   { id: 'dashboard' as const, label: 'Home', icon: '🏠', badge: activeApplications.value.length },
-  { id: 'kbli' as const, label: 'Pencarian KBLI 2020', icon: '🔍' },
-  { id: 'wizard' as const, label: 'Wizard Pengajuan Izin', icon: '📝' },
+  { id: 'kbli' as const, label: 'Temukan', icon: '🔍' },
+  { id: 'wizard' as const, label: 'Siapkan', icon: '📝' },
   { id: 'inbox' as const, label: 'Kotak Masuk', icon: '📬', badge: notificationStore.unreadCount }
 ]);
 
