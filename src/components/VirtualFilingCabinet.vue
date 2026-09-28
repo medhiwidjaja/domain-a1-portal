@@ -840,33 +840,20 @@
               </button>
             </div>
 
-            <!-- NIB Readiness status box -->
+            <!-- Legal Profile Verification Status Box -->
             <div
               class="p-3 rounded-xl border text-xs flex items-start space-x-2.5 transition"
-              :class="hasActiveNibCredential
-                ? 'bg-blue-50 border-blue-200 text-blue-900'
-                : isAhuAndKswpVerified
-                  ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
-                  : 'bg-amber-50 border-amber-200 text-amber-900'"
+              :class="isAhuAndKswpVerified ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'"
             >
-              <span class="text-base">{{ hasActiveNibCredential ? '✅' : isAhuAndKswpVerified ? '📜' : '🔒' }}</span>
+              <span class="text-base">{{ isAhuAndKswpVerified ? '📜' : '🔒' }}</span>
               <div>
                 <span class="font-bold block">
-                  {{
-                    hasActiveNibCredential
-                      ? 'NIB Credential Aktif'
-                      : isAhuAndKswpVerified
-                        ? 'Syarat Terverifikasi: Siap Menerbitkan NIB Credential'
-                        : 'Verifikasi AHU & DJP Diperlukan'
-                  }}
+                  {{ isAhuAndKswpVerified ? 'Status Legalitas Terverifikasi AHU & DJP' : 'Verifikasi AHU & DJP Diperlukan' }}
                 </span>
                 <p class="text-[11px] mt-0.5 leading-relaxed">
-                  {{
-                    hasActiveNibCredential
-                      ? `NIB (${editingCompany.nib || companyStore.activeCompany.nib || 'Aktif'}) telah diterbitkan dan tersimpan dalam VFC. Menyimpan formulir ini akan memperbarui data profil legalitas perusahaan.`
-                      : isAhuAndKswpVerified
-                        ? 'Data legalitas badan usaha dan kepatuhan pajak telah valid. Saat disimpan, berkas legalitas akan disimpan ke folder PERUSAHAAN dan Verifiable NIB Credential resmi akan diterbitkan ke brankas VFC Anda.'
-                        : 'Pastikan status AHU Kemenkumham dan KSWP DJP terverifikasi untuk menyimpan berkas ke VFC dan menerbitkan NIB Credential.'
+                  {{ isAhuAndKswpVerified
+                    ? 'Data badan usaha (AHU) dan kepatuhan pajak (KSWP DJP) telah valid. Dokumen legalitas resmi akan disimpan ke folder PERUSAHAAN. NIB Credential resmi akan diterbitkan setelah Persyaratan Dasar (KKPR, Lingkungan, PBG/SLF) diselesaikan pada menu Siapkan.'
+                    : 'Pastikan status AHU Kemenkumham dan KSWP DJP terverifikasi untuk menyimpan dokumen legalitas ke folder PERUSAHAAN.'
                   }}
                 </p>
               </div>
@@ -885,9 +872,9 @@
             <button
               type="submit"
               class="px-5 py-2 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5"
-              :class="hasActiveNibCredential ? 'bg-blue-600 hover:bg-blue-700' : isAhuAndKswpVerified ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'"
+              :class="isAhuAndKswpVerified ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'"
             >
-              <span>{{ hasActiveNibCredential ? '💾 Simpan Pembaruan Profil' : isAhuAndKswpVerified ? '🛡️ Simpan ke VFC & Terbitkan NIB Credential' : 'Simpan Profil Entitas' }}</span>
+              <span>💾 Simpan Profil Entitas</span>
             </button>
           </div>
         </form>
@@ -1360,14 +1347,12 @@ async function simulateAllSync() {
 async function handleSaveCompanyProfile() {
   const isAhuVerified = Boolean(editingCompany.ahu_sk_number && editingCompany.ahu_sk_number.trim() !== '');
   const isKswpVerified = editingCompany.kswp_status === 'VALID';
-  const alreadyHadNib = hasActiveNibCredential.value;
 
   // 1. Verify AHU & DJP if not yet verified
   if (!isAhuVerified || !isKswpVerified) {
-    const promptMsg = alreadyHadNib
-      ? 'Data legalitas belum terverifikasi penuh oleh AHU Kemenkumham dan KSWP DJP.\n\nApakah Anda ingin menjalankan verifikasi otomatis AHU dan DJP sekarang?'
-      : 'Data profil legalitas belum terverifikasi penuh oleh AHU Kemenkumham dan KSWP DJP.\n\nApakah Anda ingin menjalankan verifikasi otomatis AHU dan DJP sekarang untuk menerbitkan NIB Credential?';
-    const confirmAutoSync = confirm(promptMsg);
+    const confirmAutoSync = confirm(
+      'Data profil legalitas belum terverifikasi penuh oleh AHU Kemenkumham dan KSWP DJP.\n\nApakah Anda ingin menjalankan verifikasi otomatis AHU dan DJP sekarang untuk memvalidasi profil legalitas entitas usaha?'
+    );
     if (!confirmAutoSync) {
       return;
     }
@@ -1384,10 +1369,10 @@ async function handleSaveCompanyProfile() {
     }
   }
 
-  // 2. Ensure official NIB number
+  // 2. Ensure company profile data
   const currentNib = editingCompany.nib && editingCompany.nib.trim() !== ''
     ? editingCompany.nib.trim()
-    : `912000${Math.floor(1000000 + Math.random() * 9000000)}`;
+    : (companyStore.activeCompany.nib || `912000${Math.floor(1000000 + Math.random() * 9000000)}`);
   editingCompany.nib = currentNib;
 
   // 3. Update Company Store Profile
@@ -1442,46 +1427,12 @@ async function handleSaveCompanyProfile() {
     });
   }
 
-  // 5. Issue Verifiable NIB Credential for the Company
-  await credentialStore.issueCredential({
-    companyId: companyStore.activeCompanyId,
-    category: 'NIB',
-    title: `Verifiable NIB (Nomor Induk Berusaha): ${editingCompany.name}`,
-    kbliCode: 'INDUK',
-    kbliTitle: `Nomor Induk Berusaha (${editingCompany.type})`,
-    credentialType: 'VerifiableNIB',
-    issuerDid: 'did:oss:bkpm:gov:id',
-    issuerName: 'Kementerian Investasi / BKPM Republik Indonesia',
-    claims: {
-      nomor_nib: currentNib,
-      nama_perusahaan: editingCompany.name,
-      bentuk_badan_usaha: editingCompany.type,
-      npwp_perusahaan: editingCompany.npwp,
-      status_penanaman_modal: editingCompany.status_penanaman_modal === '01' ? 'PMA (Penanaman Modal Asing)' : 'PMDN (Penanaman Modal Dalam Negeri)',
-      modal_disetor_idr: editingCompany.capital,
-      skala_usaha: editingCompany.scale,
-      nomor_sk_ahu: editingCompany.ahu_sk_number,
-      tanggal_pengesahan_ahu: editingCompany.ahu_date,
-      nama_notaris: editingCompany.notary_name,
-      status_kswp_djp: editingCompany.kswp_status,
-      kepatuhan_pajak: editingCompany.tax_compliance,
-      alamat_domisili: editingCompany.address,
-      tanggal_terbit: new Date().toISOString().slice(0, 10),
-      status_legalitas: 'AKTIF & TERVERIFIKASI RESMI AHU & DJP'
-    }
-  });
-
-  // Expand folders in VFC so user immediately sees results
+  // Expand PERUSAHAAN folder in VFC so user immediately sees stored legal documents
   expandedFolders['PERUSAHAAN'] = true;
-  expandedFolders['CREDENTIALS'] = true;
 
   showCompanyProfileModal.value = false;
 
-  if (alreadyHadNib) {
-    alert(`✅ Berhasil!\n\n1. Profil Legalitas Entitas "${editingCompany.name}" berhasil diperbarui.\n2. Berkas legalitas di folder VFC "PERUSAHAAN" telah disinkronkan.\n3. Verifiable NIB (${currentNib}) telah diperbarui dengan data terkini.`);
-  } else {
-    alert(`🎉 Sukses!\n\n1. Profil Legalitas Entitas "${editingCompany.name}" telah terverifikasi AHU & DJP.\n2. Berkas legalitas resmi tersimpan di folder VFC "PERUSAHAAN".\n3. Verifiable NIB (${currentNib}) resmi diterbitkan dan disegel ke dalam folder VFC "CREDENTIALS"!`);
-  }
+  alert(`🎉 Sukses!\n\n1. Profil Legalitas Entitas "${editingCompany.name}" telah tersimpan dan terverifikasi AHU & DJP.\n2. Berkas legalitas resmi tersimpan di folder VFC "PERUSAHAAN".\n\nCatatan: NIB Credential resmi akan diterbitkan setelah Persyaratan Dasar (KKPR, Lingkungan, PBG/SLF) diselesaikan pada alur pengajuan izin (Siapkan).`);
 }
 
 // Location Studio Modal state & actions

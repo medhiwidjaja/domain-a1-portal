@@ -318,6 +318,46 @@ async function handleLanjut(fromStep: number, toStep: number) {
         status_keselamatan: 'Standar Teknis Arsitektur & Struktur Disetujui'
       }
     });
+
+    // === Persyaratan Dasar Lengkap (KKPR, Lingkungan, PBG/SLF) ===
+    // NIB Credential resmi diterbitkan setelah Persyaratan Dasar selesai
+    const activeComp = companyStore.activeCompany;
+    const officialNib = activeComp.nib && activeComp.nib.trim() !== ''
+      ? activeComp.nib.trim()
+      : `912000${Math.floor(1000000 + Math.random() * 9000000)}`;
+
+    if (!activeComp.nib) {
+      await companyStore.updateCompanyProfile(companyStore.activeCompanyId, {
+        ...activeComp,
+        nib: officialNib
+      });
+    }
+
+    await credentialStore.issueCredential({
+      companyId: companyStore.activeCompanyId,
+      category: 'NIB',
+      title: `Verifiable NIB (Nomor Induk Berusaha): ${activeComp.name}`,
+      kbliCode: permitStore.activeWizard.kbli?.kbli_code || 'INDUK',
+      kbliTitle: `Nomor Induk Berusaha (${permitStore.activeWizard.kbli?.title || activeComp.type})`,
+      credentialType: 'VerifiableNIB',
+      issuerDid: 'did:oss:bkpm:gov:id',
+      issuerName: 'Kementerian Investasi / BKPM Republik Indonesia',
+      claims: {
+        nomor_nib: officialNib,
+        nama_perusahaan: activeComp.name,
+        bentuk_badan_usaha: activeComp.type,
+        npwp_perusahaan: activeComp.npwp,
+        status_penanaman_modal: activeComp.status_penanaman_modal === '01' ? 'PMA (Penanaman Modal Asing)' : 'PMDN (Penanaman Modal Dalam Negeri)',
+        skala_usaha: activeComp.scale,
+        nomor_sk_ahu: activeComp.ahu_sk_number || 'AHU-0019283.AH.01.01.2026',
+        status_kswp_djp: activeComp.kswp_status || 'VALID',
+        persyaratan_dasar_status: 'LENGKAP & TERVERIFIKASI RESMI (KKPR, LINGKUNGAN, PBG/SLF)',
+        tanggal_terbit: new Date().toISOString().slice(0, 10),
+        status_legalitas: 'AKTIF & RESMI BERLAKU'
+      }
+    });
+
+    showToast('🎉 Persyaratan Dasar Lengkap! NIB Credential resmi telah diterbitkan ke VFC.');
   }
 
   openAccordions[fromStep] = false;
@@ -461,6 +501,39 @@ async function handleConfirmSubmit() {
   showPreCommitModal.value = false;
   const app = await permitStore.submitApplication();
   permitStore.setWizardStep(6);
+
+  // Ensure NIB Credential exists in credential store
+  const activeComp = companyStore.activeCompany;
+  const officialNib = activeComp.nib && activeComp.nib.trim() !== ''
+    ? activeComp.nib.trim()
+    : `912000${Math.floor(1000000 + Math.random() * 9000000)}`;
+  const hasNib = credentialStore.activeCompanyCredentials.some((c) => c.category === 'NIB');
+  if (!hasNib) {
+    await credentialStore.issueCredential({
+      companyId: companyStore.activeCompanyId,
+      category: 'NIB',
+      title: `Verifiable NIB (Nomor Induk Berusaha): ${activeComp.name}`,
+      kbliCode: permitStore.activeWizard.kbli?.kbli_code || 'INDUK',
+      kbliTitle: `Nomor Induk Berusaha (${permitStore.activeWizard.kbli?.title || activeComp.type})`,
+      credentialType: 'VerifiableNIB',
+      issuerDid: 'did:oss:bkpm:gov:id',
+      issuerName: 'Kementerian Investasi / BKPM Republik Indonesia',
+      claims: {
+        nomor_nib: officialNib,
+        nama_perusahaan: activeComp.name,
+        bentuk_badan_usaha: activeComp.type,
+        npwp_perusahaan: activeComp.npwp,
+        status_penanaman_modal: activeComp.status_penanaman_modal === '01' ? 'PMA (Penanaman Modal Asing)' : 'PMDN (Penanaman Modal Dalam Negeri)',
+        skala_usaha: activeComp.scale,
+        nomor_sk_ahu: activeComp.ahu_sk_number || 'AHU-0019283.AH.01.01.2026',
+        status_kswp_djp: activeComp.kswp_status || 'VALID',
+        persyaratan_dasar_status: 'LENGKAP & TERVERIFIKASI RESMI (KKPR, LINGKUNGAN, PBG/SLF)',
+        tanggal_terbit: new Date().toISOString().slice(0, 10),
+        status_legalitas: 'AKTIF & RESMI BERLAKU'
+      }
+    });
+  }
+
   if (app && app.verifiableCredential) {
     await notificationStore.addNotification({
       type: 'CREDENTIAL_ISSUED',

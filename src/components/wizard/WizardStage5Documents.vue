@@ -46,6 +46,17 @@
 
     <!-- Accordion Content -->
     <div v-show="isOpen" class="p-5 border-t border-gray-200 space-y-6 bg-white">
+      <!-- Persyaratan Dasar Complete Banner -->
+      <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start space-x-3 text-xs text-emerald-950 shadow-2xs">
+        <span class="text-xl">🛡️</span>
+        <div>
+          <span class="font-bold block text-emerald-950">Persyaratan Dasar Selesai — NIB Credential Resmi Diterbitkan!</span>
+          <p class="text-[11px] mt-0.5 text-emerald-800 leading-relaxed">
+            Seluruh Persyaratan Dasar (KKPR Tata Ruang, Persetujuan Lingkungan, dan PBG/SLF Bangunan Gedung) telah berhasil divalidasi dan disegel ke dalam brankas VFC Anda. NIB Credential resmi telah aktif. Lampirkan dokumen persyaratan teknis sektor di bawah ini sebelum mengirim berkas final.
+          </p>
+        </div>
+      </div>
+
       <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
         <div class="flex items-center space-x-2">
           <span class="text-sm font-bold bg-blue-600 text-white px-2 py-0.5 rounded">VFC</span>
